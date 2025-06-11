@@ -8,4 +8,6 @@ class Config:
     port = config("DB_PORT")
     name = config("DB_NAME")
 
-    DATABASE_URL = f"postgresql://{user}:{password}@{host}:{port}/{name}"
+    SQLALCHEMY_DATABASE_URI = f"postgresql://{user}:{password}@{host}:{port}/{name}"
+
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
