@@ -2,6 +2,7 @@ from decouple import config
 from urllib.parse import quote
 
 class Config:
+    DEBUG = config('DEBUG', default=True, cast=bool)
     user = config("DB_USER")
     password = quote(config("DB_PASS"))
     host = config("DB_HOST")
