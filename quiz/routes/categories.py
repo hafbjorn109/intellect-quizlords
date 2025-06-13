@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from quiz.models import db, Category
-from quiz.schemas.category import CategorySchema
+from quiz.schemas.questions import CategorySchema
 
 bp = Blueprint('categories', __name__, url_prefix='/categories')
 
