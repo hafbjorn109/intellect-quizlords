@@ -37,7 +37,7 @@ def create_category():
 def get_categories():
     """
     Get a list of all categories.
-    Returns an array of category objects.
+    Returns a list of category objects.
     """
     categories = Category.query.all()
     return jsonify(categories_schema.dump(categories)), 200
@@ -63,12 +63,13 @@ def update_category(category_id):
     if not request.is_json:
         return jsonify({'error': 'Request must be JSON'}), 400
 
-    category = Category.query.get_or_404(category_id)
     data = request.get_json()
-
     errors = category_schema.validate(data)
+
     if errors:
         return jsonify({'errors': errors}), 400
+
+    category = Category.query.get_or_404(category_id)
 
     existing = Category.query.filter_by(name=data['name']).first()
     if existing and existing.id != category_id:
