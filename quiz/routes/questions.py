@@ -1,7 +1,5 @@
-from email import errors
-
 from flask import Blueprint, jsonify, request
-from quiz.models import db, Question
+from quiz.models import db, Question, Category
 from quiz.schemas.questions import QuestionSchema
 
 bp = Blueprint('questions', __name__, url_prefix='/questions')
@@ -24,6 +22,10 @@ def create_question():
     errors = question_schema.validate(data)
     if errors:
         return jsonify({'error': errors}), 400
+
+    category = Category.query.get(data['category_id'])
+    if category is None:
+        return jsonify({'error': f'Category {data["category_id"]} not found'}), 404
 
     question = Question(text=data['text'], category_id=data['category_id'])
     db.session.add(question)
@@ -68,6 +70,9 @@ def update_question(question_id):
         return jsonify({'error': errors}), 400
 
     question = Question.query.get_or_404(question_id)
+
+    # Ensure the referenced category exists; will abort with 404 if not
+    category = Category.query.get_or_404(data['category_id'])
 
     question.text = data.get('text', question.text)
     question.category_id = data.get('category_id', question.category_id)
