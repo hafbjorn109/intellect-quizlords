@@ -27,7 +27,7 @@ class Question(db.Model):
 
 class Answer(db.Model):
     __tablename__ = 'answers'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(255), nullable=False)
     is_correct = db.Column(db.Boolean, default=False, nullable=False)
