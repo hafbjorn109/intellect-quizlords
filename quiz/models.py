@@ -44,6 +44,7 @@ class GameSession(db.Model):
     code = db.Column(db.String(8), nullable=False, unique=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     players = db.relationship('Player', back_populates='session', cascade="all, delete")
+    rounds = db.relationship('Round', back_populates='session', cascade="all, delete")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -59,3 +60,15 @@ class Player(db.Model):
     is_ready = db.Column(db.Boolean, default=False, nullable=False)
     session_id = db.Column(db.Integer, db.ForeignKey('game_sessions.id'), nullable=False)
     session = db.relationship(GameSession, back_populates='players')
+
+
+class Round(db.Model):
+    __tablename__ = 'rounds'
+
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.Integer, db.ForeignKey('game_sessions.id'), nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
+    current = db.Column(db.Boolean, default=False, nullable=False)
+
+    session = db.relationship('GameSession', back_populates='rounds')
+    question = db.relationship('Question')
