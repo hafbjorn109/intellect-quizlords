@@ -47,7 +47,7 @@ def get_players(code):
 
 
 @bp.route('/<string:code>/players/<int:player_id>/ready', methods=['PUT'])
-def set_ready(player_id):
+def set_ready(code, player_id):
     """
     Set a player's readiness within a session.
 
@@ -67,6 +67,6 @@ def set_ready(player_id):
 
     if 'is_ready' in data:
         player.is_ready = data['is_ready']
-        
+
     db.session.commit()
     return jsonify(player_schema.dump(player)), 200
