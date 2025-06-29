@@ -7,6 +7,7 @@ from quiz.schemas.sessions import GameSessionSchema, PlayerSchema
 bp = Blueprint('sessions', __name__, url_prefix='/sessions')
 
 session_schema = GameSessionSchema()
+sessions_schema = GameSessionSchema(many=True)
 player_schema = PlayerSchema()
 players_schema = PlayerSchema(many=True)
 
@@ -18,6 +19,22 @@ def create_session():
     db.session.add(session)
     db.session.commit()
     return jsonify(session_schema.dump(session)), 201
+
+
+@bp.route('/', methods=['GET'])
+def get_sessions():
+    sessions = GameSession.query.all()
+    return jsonify(sessions_schema.dump(sessions)), 200
+
+
+@bp.route('/<string:code>', methods=['GET'])
+def get_session(code):
+    session = GameSession.query.filter_by(code=code).first()
+    if session is None:
+        return jsonify({'error': f'Session {code} not found'}), 404
+
+    return jsonify(session_schema.dump(session)), 200
+
 
 
 @bp.route('/<string:code>/join', methods=['POST'])
