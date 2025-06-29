@@ -37,6 +37,22 @@ class Answer(db.Model):
     def __repr__(self):
         return f'<Answer {self.text } (correct={self.is_correct})>'
 
+
+class AnswerGiven(db.Model):
+    __tablename__ = 'answers_given'
+
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey('players.id'), nullable=False)
+    round_id = db.Column(db.Integer, db.ForeignKey('rounds.id'), nullable=False)
+    answer_id = db.Column(db.Integer, db.ForeignKey('answers.id'), nullable=False)
+
+    is_correct = db.Column(db.Boolean, nullable=False)
+
+    player = db.relationship('Player')
+    round = db.relationship('Round')
+    answer = db.relationship('Answer')
+
+
 class GameSession(db.Model):
     __tablename__ = 'game_sessions'
 

@@ -24,3 +24,11 @@ class AnswerSchema(Schema):
     question_id = fields.Int(required=True)
     question = fields.Nested(lambda: QuestionSchema(only=('id', 'text')), dump_only=True)
 
+
+class AnswerGivenSchema(Schema):
+    # Marshmallow schema for serializing and validating AnswerGiven objects.
+    id = fields.Int(dump_only=True)
+    player_id = fields.Int(required=True)
+    round_id = fields.Int(required=True)
+    answer_id = fields.Int(required=True)
+    is_correct = fields.Bool(dump_only=True)
