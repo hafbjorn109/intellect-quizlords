@@ -37,19 +37,25 @@ def get_current_round(code):
     return jsonify(round_schema.dump(current_round)), 200
 
 
-@bp.route('/<int:round_id>/answer', methods=['POST'])
-def given_answer(code, round_id):
+@bp.route('/answer', methods=['POST'])
+def given_answer(code):
     session = GameSession.query.filter_by(code=code).first_or_404()
-    round = Round.query.filter_by(session_id=session.id, id=round_id).first_or_404()
 
     data = request.get_json()
     errors = answer_given_schema.validate(data)
     if errors:
         return jsonify({'error': errors}), 400
 
+    round_id = data['round_id']
+    round = Round.query.filter_by(session_id=session.id, id=round_id).first_or_404()
+
     player = Player.query.get_or_404(data['player_id'])
     if player.session_id != session.id:
         return jsonify({'error': 'Player does not belong to this session'}), 403
+
+    existing = AnswerGiven.query.filter_by(player_id=player.id, round_id=round.id).first()
+    if existing:
+        return jsonify({'error': 'Player has already answered this round'}), 400
 
     answer = Answer.query.get_or_404(data['answer_id'])
     if answer.question.id != round.question_id:
