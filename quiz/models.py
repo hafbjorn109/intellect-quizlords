@@ -76,6 +76,7 @@ class Player(db.Model):
     is_ready = db.Column(db.Boolean, default=False, nullable=False)
     session_id = db.Column(db.Integer, db.ForeignKey('game_sessions.id'), nullable=False)
     session = db.relationship(GameSession, back_populates='players')
+    score = db.Column(db.Integer, default=0)
 
 
 class Round(db.Model):

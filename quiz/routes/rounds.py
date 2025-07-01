@@ -10,6 +10,13 @@ answer_given_schema = AnswerGivenSchema()
 
 @bp.route('/start', methods=['POST'])
 def start_round(code):
+    """
+    Start a new round in the session.
+
+    - Deactivates the current round (if any).
+    - Randomly selects a question.
+    - Creates a new active round linked to that question.
+    """
     session = GameSession.query.filter_by(code=code).first_or_404()
 
     #Deactivate current round if any
@@ -28,6 +35,11 @@ def start_round(code):
 
 @bp.route('/current', methods=['GET'])
 def get_current_round(code):
+    """
+    Get the currently active round in a session.
+
+    - Returns the round marked as 'current' for the given session.
+    """
     session = GameSession.query.filter_by(code=code).first_or_404()
     current_round = Round.query.filter_by(session_id=session.id, current=True).first()
 
@@ -39,6 +51,15 @@ def get_current_round(code):
 
 @bp.route('/answer', methods=['POST'])
 def given_answer(code):
+    """
+    Submit an answer for a round by a player.
+
+    - Validates session and round.
+    - Checks that the player hasn't answered already.
+    - Verifies that the answer matches the question for this round.
+    - Updates the player's score if the answer is correct.
+    - Saves the answer.
+    """
     session = GameSession.query.filter_by(code=code).first_or_404()
 
     data = request.get_json()
@@ -62,6 +83,9 @@ def given_answer(code):
         return jsonify({'error': 'Answer does not belong to the current round question'}), 400
 
     is_correct = answer.is_correct
+
+    if is_correct:
+        player.score += 1
 
     given = AnswerGiven(
         player_id=player.id,
