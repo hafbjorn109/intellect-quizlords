@@ -5,8 +5,15 @@ from .questions import QuestionSchema
 class PlayerSchema(Schema):
     id = fields.Int(dump_only=True)
     name = fields.Str(required=True)
-    is_ready = fields.Bool()
-    session_id = fields.Int()
+    is_ready = fields.Bool(required=True)
+    session_id = fields.Int(dump_only=True)
+    score = fields.Int(dump_only=True)
+
+
+class ScoreboardPlayerSchema(Schema):
+    id = fields.Int(dump_only=True)
+    name = fields.Str(dump_only=True)
+    score = fields.Int(dump_only=True)
 
 
 class GameSessionSchema(Schema):
@@ -19,6 +26,6 @@ class GameSessionSchema(Schema):
 class RoundSchema(Schema):
     id = fields.Int(dump_only=True)
     session_id = fields.Int(required=True)
-    question_id = fields.Int(required=True)
-    current = fields.Bool()
+    question_id = fields.Int(dump_only=True)
+    current = fields.Bool(dump_only=True)
     question = fields.Nested(QuestionSchema, dump_only=True)

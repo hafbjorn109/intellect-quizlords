@@ -18,6 +18,8 @@ def start_round(code):
     - Creates a new active round linked to that question.
     """
     session = GameSession.query.filter_by(code=code).first_or_404()
+    if not session.is_active:
+        return jsonify({'error': 'Session is no longer active'}), 403
 
     #Deactivate current round if any
     Round.query.filter_by(session_id=session.id, current=True).update({'current': False})
@@ -41,7 +43,7 @@ def get_current_round(code):
     - Returns the round marked as 'current' for the given session.
     """
     session = GameSession.query.filter_by(code=code).first_or_404()
-    current_round = Round.query.filter_by(session_id=session.id, current=True).first()
+    current_round = Round.query.filter_by(session_id=session.id, current=True).first_or_404()
 
     if not current_round:
         return jsonify({'error': 'No active round found'}), 404
@@ -61,6 +63,8 @@ def given_answer(code):
     - Saves the answer.
     """
     session = GameSession.query.filter_by(code=code).first_or_404()
+    if not session.is_active:
+        return jsonify({'error': 'Session is no longer active'}), 403
 
     data = request.get_json()
     errors = answer_given_schema.validate(data)
@@ -98,3 +102,28 @@ def given_answer(code):
     db.session.commit()
 
     return jsonify(answer_given_schema.dump(given)), 201
+
+
+@bp.route('/next', methods=['POST'])
+def next_round(code):
+    """
+    Create the next round in a session, marking previous ones as not current.
+    """
+    session = GameSession.query.filter_by(code=code).first_or_404()
+    if not session.is_active:
+        return jsonify({'error': 'Session is no longer active'}), 403
+
+    # Deactivate previous rounds
+    Round.query.filter_by(session_id=session.id, current=True).update({'current': False})
+
+    # Get a random question
+    question = Question.query.order_by(db.func.random()).first()
+    if not question:
+        return jsonify({'error': 'No questions found'}), 400
+
+    # Create and store new round
+    new_round = Round(session_id=session.id, question_id=question.id, current=True)
+    db.session.add(new_round)
+    db.session.commit()
+
+    return jsonify(round_schema.dump(new_round)), 201

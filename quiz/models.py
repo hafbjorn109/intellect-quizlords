@@ -65,7 +65,14 @@ class GameSession(db.Model):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if not self.code:
-            self.code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            self.code = self.generate_unique_code()
+
+    @staticmethod
+    def generate_unique_code():
+        while True:
+            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            if not GameSession.query.filter_by(code=code).first():
+                return code
 
 
 class Player(db.Model):

@@ -2,7 +2,7 @@ import code
 
 from flask import Blueprint, jsonify, request
 from quiz.models import db, GameSession, Player
-from quiz.schemas.sessions import GameSessionSchema, PlayerSchema
+from quiz.schemas.sessions import GameSessionSchema, PlayerSchema, ScoreboardPlayerSchema
 
 bp = Blueprint('sessions', __name__, url_prefix='/sessions')
 
@@ -10,6 +10,7 @@ session_schema = GameSessionSchema()
 sessions_schema = GameSessionSchema(many=True)
 player_schema = PlayerSchema()
 players_schema = PlayerSchema(many=True)
+scoreboard_schema = ScoreboardPlayerSchema(many=True)
 
 
 @bp.route('/', methods=['POST'])
@@ -44,6 +45,9 @@ def join_session(code):
     Required JSON with 'name' field.
     """
     session = GameSession.query.filter_by(code=code).first_or_404()
+    if not session.is_active:
+        return jsonify({'error': 'Session is no longer active'}), 403
+
     data = request.get_json()
 
     errors = player_schema.validate(data)
@@ -87,3 +91,28 @@ def set_ready(code, player_id):
 
     db.session.commit()
     return jsonify(player_schema.dump(player)), 200
+
+
+@bp.route('/<string:code>/scoreboard', methods=['GET'])
+def get_scoreboard(code):
+    """
+    Return a scoreboard of all players in the session,
+    sorted by score descending.
+    """
+    session = GameSession.query.filter_by(code=code).first_or_404()
+    players = Player.query.filter_by(session_id=session.id).order_by(Player.score.desc()).all()
+
+    return jsonify(scoreboard_schema.dump(players)), 200
+
+
+@bp.route('/end', methods=['POST'])
+def end_session(code):
+    """
+    End the game session (marks session as inactive).
+    """
+    session = GameSession.query.filter_by(code=code).first_or_404()
+
+    session.is_active = False
+    db.session.commit()
+
+    return jsonify({'message': 'Session ended'}), 200
