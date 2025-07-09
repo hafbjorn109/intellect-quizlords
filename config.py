@@ -1,5 +1,7 @@
 from decouple import config
 from urllib.parse import quote
+import os
+from datetime import timedelta
 
 class Config:
     """
@@ -29,3 +31,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = f"postgresql://{user}:{password}@{host}:{port}/{name}"
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    SECRET_KEY = os.environ.get("SECRET_KEY")
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
+    JWT_EXPIRATION_DELTA = timedelta(hours=24)

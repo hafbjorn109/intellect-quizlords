@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request, current_app
 from quiz.models import db, GameSession, Player
 from quiz.schemas.sessions import GameSessionSchema, PlayerSchema, ScoreboardPlayerSchema
 from flask_socketio import emit
+from quiz.utils.jwt_helper import generate_token
 
 bp = Blueprint('sessions', __name__, url_prefix='/sessions')
 
@@ -65,7 +66,12 @@ def join_session(code):
     except Exception as e:
         current_app.logger.warning(f'Emit failed for session {code}: {e}')
 
-    return jsonify(player_schema.dump(player)), 201
+    token = generate_token({'player_id': player.id})
+
+    return jsonify({
+        'player': player_schema.dump(player),
+        'token': token
+    }), 201
 
 
 @bp.route('/<string:code>/players', methods=['GET'])
