@@ -1,5 +1,3 @@
-import code
-
 from flask import Blueprint, jsonify, request
 from quiz.models import db, GameSession, Player
 from quiz.schemas.sessions import GameSessionSchema, PlayerSchema, ScoreboardPlayerSchema
@@ -12,7 +10,6 @@ player_schema = PlayerSchema()
 players_schema = PlayerSchema(many=True)
 scoreboard_schema = ScoreboardPlayerSchema(many=True)
 
-
 @bp.route('/', methods=['POST'])
 def create_session():
     """Create a new session (returns session code)"""
@@ -24,18 +21,19 @@ def create_session():
 
 @bp.route('/', methods=['GET'])
 def get_sessions():
+    """Gets a list of all sessions."""
     sessions = GameSession.query.all()
     return jsonify(sessions_schema.dump(sessions)), 200
 
 
 @bp.route('/<string:code>', methods=['GET'])
 def get_session(code):
+    """Gets a session based on code."""
     session = GameSession.query.filter_by(code=code).first()
     if session is None:
         return jsonify({'error': f'Session {code} not found'}), 404
 
     return jsonify(session_schema.dump(session)), 200
-
 
 
 @bp.route('/<string:code>/join', methods=['POST'])

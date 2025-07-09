@@ -7,6 +7,11 @@ class CategorySchema(Schema):
     name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
 
 
+class CategoryPickSchema(Schema):
+    # Marshmallow schema for serializing and validating Category choice made by a player.
+    category_id = fields.Int(required=True)
+
+
 class QuestionSchema(Schema):
     # Marshmallow schema for serializing and validating Question objects.
     id = fields.Int(dump_only=True)
@@ -23,6 +28,12 @@ class AnswerSchema(Schema):
     is_correct = fields.Bool(required=True)
     question_id = fields.Int(required=True)
     question = fields.Nested(lambda: QuestionSchema(only=('id', 'text')), dump_only=True)
+
+
+class AnswerUpdateSchema(Schema):
+    text = fields.Str(validate=validate.Length(min=1, max=255))
+    is_correct = fields.Bool()
+    question_id = fields.Int()
 
 
 class AnswerGivenSchema(Schema):

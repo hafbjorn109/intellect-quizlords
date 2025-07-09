@@ -59,7 +59,18 @@ class GameSession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.String(8), nullable=False, unique=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-    players = db.relationship('Player', back_populates='session', cascade="all, delete")
+    chooser_id = db.Column(
+        db.Integer,
+        db.ForeignKey('players.id', use_alter=True, name='fk_chooser_id', ondelete='SET NULL'),
+        nullable=True
+    )
+    players = db.relationship(
+        'Player',
+        back_populates='session',
+        cascade="all, delete",
+        foreign_keys='Player.session_id'
+    )
+    chooser = db.relationship('Player', foreign_keys=[chooser_id])
     rounds = db.relationship('Round', back_populates='session', cascade="all, delete")
 
     def __init__(self, **kwargs):
@@ -82,7 +93,11 @@ class Player(db.Model):
     name = db.Column(db.String(25), nullable=False)
     is_ready = db.Column(db.Boolean, default=False, nullable=False)
     session_id = db.Column(db.Integer, db.ForeignKey('game_sessions.id'), nullable=False)
-    session = db.relationship(GameSession, back_populates='players')
+    session = db.relationship(
+        'GameSession',
+        back_populates='players',
+        foreign_keys=[session_id]
+    )
     score = db.Column(db.Integer, default=0)
 
 
@@ -93,6 +108,11 @@ class Round(db.Model):
     session_id = db.Column(db.Integer, db.ForeignKey('game_sessions.id'), nullable=False)
     question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
     current = db.Column(db.Boolean, default=False, nullable=False)
+    chooser_id = db.Column(
+        db.Integer,
+        db.ForeignKey('players.id', use_alter=True, name='fk_round_chooser_id', ondelete='SET NULL'),
+        nullable=True
+    )
 
     session = db.relationship('GameSession', back_populates='rounds')
     question = db.relationship('Question')

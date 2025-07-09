@@ -1,38 +1,106 @@
 from flask import Blueprint, jsonify, request
 from quiz.models import db, Round, GameSession, Question, Player, Answer, AnswerGiven
-from quiz.schemas.sessions import RoundSchema
-from quiz.schemas.questions import AnswerGivenSchema
+from quiz.schemas.sessions import RoundSchema, ChooserSchema
+from quiz.schemas.questions import AnswerGivenSchema, CategoryPickSchema
+import random
 
 bp = Blueprint('rounds', __name__, url_prefix='/sessions/<string:code>/rounds')
 
 round_schema = RoundSchema()
 answer_given_schema = AnswerGivenSchema()
+category_pick_schema = CategoryPickSchema()
+chooser_schema = ChooserSchema()
 
 @bp.route('/start', methods=['POST'])
-def start_round(code):
+def first_chooser(code):
     """
-    Start a new round in the session.
-
-    - Deactivates the current round (if any).
-    - Randomly selects a question.
-    - Creates a new active round linked to that question.
+    Selects a random player to start the first round (chooser).
     """
     session = GameSession.query.filter_by(code=code).first_or_404()
     if not session.is_active:
         return jsonify({'error': 'Session is no longer active'}), 403
 
-    #Deactivate current round if any
-    Round.query.filter_by(session_id=session.id, current=True).update({'current': False})
+    if not session.players:
+        return jsonify({'error': 'No players in sessions'}), 400
 
-    question = Question.query.order_by(db.func.random()).first()
-    if not question:
-        return jsonify({'error': 'No questions found'}), 400
-
-    new_round = Round(session_id=session.id, question_id=question.id, current=True)
-    db.session.add(new_round)
+    chooser = random.choice(session.players)
+    session.chooser_id = chooser.id
     db.session.commit()
 
-    return jsonify(round_schema.dump(new_round)), 201
+    return jsonify({'chooser': chooser_schema.dump(chooser)}), 200
+
+
+@bp.route('/setup', methods=['POST'])
+def setup_round(code):
+    """
+    Gets category picked by a player. Creates a new round with random question from that category.
+    """
+    session = GameSession.query.filter_by(code=code).first_or_404()
+    if not session.is_active:
+        return jsonify({'error': 'Session is no longer active'}), 403
+
+    data = request.get_json()
+    errors = category_pick_schema.validate(data)
+    if errors:
+        return jsonify({'error': errors}), 400
+
+    category_id = data['category_id']
+
+    # Deactivate current round
+    Round.query.filter_by(session_id=session.id, current=True).update({'current': False})
+
+    # Get all previously used question IDs in this session
+    used_question_ids = db.session.query(Round.question_id).filter_by(session_id=session.id).all()
+
+    # Converts tuple into list of pure ids
+    used_ids = [q[0] for q in used_question_ids]
+
+    # Try to get a question from the given category that hasn't been used
+    question = (
+        Question.query
+        .filter(Question.category_id == category_id, ~Question.id.in_(used_ids))
+        .order_by(db.func.random())
+        .first()
+    )
+
+    if not question:
+        return jsonify({'error': 'No questions found for this category'}), 400
+
+    round = Round(
+        session_id=session.id,
+        question_id=question.id,
+        chooser_id=session.chooser_id,
+        current=True
+    )
+    db.session.add(round)
+    db.session.commit()
+
+    return jsonify(round_schema.dump(round)), 201
+
+
+@bp.route('/next-chooser', methods=['POST'])
+def next_chooser(code):
+    """
+    Select the next player in turn to become the chooser for the next round.
+    """
+    session = GameSession.query.filter_by(code=code).first_or_404()
+    if not session.is_active:
+        return jsonify({'error': 'Session is no longer active'}), 403
+
+    players = Player.query.filter_by(session_id=session.id).order_by(Player.id).all()
+
+    try:
+        current_index = next(i for i, p in enumerate(players) if p.id == session.chooser_id)
+    except StopIteration:
+        return jsonify({'error': 'Current chooser not found in session players'}), 400
+
+    next_index = (current_index + 1) % len(players)
+    next_player = players[next_index]
+
+    session.chooser_id = next_player.id
+    db.session.commit()
+
+    return jsonify({'chooser': chooser_schema.dump(next_player)}), 200
 
 
 @bp.route('/current', methods=['GET'])
@@ -103,27 +171,3 @@ def given_answer(code):
 
     return jsonify(answer_given_schema.dump(given)), 201
 
-
-@bp.route('/next', methods=['POST'])
-def next_round(code):
-    """
-    Create the next round in a session, marking previous ones as not current.
-    """
-    session = GameSession.query.filter_by(code=code).first_or_404()
-    if not session.is_active:
-        return jsonify({'error': 'Session is no longer active'}), 403
-
-    # Deactivate previous rounds
-    Round.query.filter_by(session_id=session.id, current=True).update({'current': False})
-
-    # Get a random question
-    question = Question.query.order_by(db.func.random()).first()
-    if not question:
-        return jsonify({'error': 'No questions found'}), 400
-
-    # Create and store new round
-    new_round = Round(session_id=session.id, question_id=question.id, current=True)
-    db.session.add(new_round)
-    db.session.commit()
-
-    return jsonify(round_schema.dump(new_round)), 201

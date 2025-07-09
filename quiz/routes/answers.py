@@ -1,10 +1,11 @@
 from flask import Blueprint, jsonify, request
 from quiz.models import db, Answer
-from quiz.schemas.questions import AnswerSchema
+from quiz.schemas.questions import AnswerSchema, AnswerUpdateSchema
 
 bp = Blueprint('answers', __name__, url_prefix='/answers')
 
 answer_schema = AnswerSchema()
+answer_update_schema = AnswerUpdateSchema()
 answers_schema = AnswerSchema(many=True)
 
 @bp.route('/', methods=['POST'])
@@ -60,7 +61,7 @@ def update_answer(answer_id):
         return jsonify({'error': 'Request must be JSON'}), 400
 
     data = request.get_json()
-    errors = answer_schema.validate(data)
+    errors = answer_update_schema.validate(data)
     if errors:
         return jsonify({'error': errors}), 400
 
