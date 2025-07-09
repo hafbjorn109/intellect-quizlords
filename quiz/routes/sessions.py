@@ -1,6 +1,7 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from quiz.models import db, GameSession, Player
 from quiz.schemas.sessions import GameSessionSchema, PlayerSchema, ScoreboardPlayerSchema
+from flask_socketio import emit
 
 bp = Blueprint('sessions', __name__, url_prefix='/sessions')
 
@@ -55,6 +56,15 @@ def join_session(code):
     player = Player(name=data['name'], session_id=session.id)
     db.session.add(player)
     db.session.commit()
+
+    try:
+        emit('player_joined', {
+            'id': player.id,
+            'name': player.name,
+        }, to=code)
+    except Exception as e:
+        current_app.logger.warning(f'Emit failed for session {code}: {e}')
+
     return jsonify(player_schema.dump(player)), 201
 
 
