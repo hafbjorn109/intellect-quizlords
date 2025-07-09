@@ -1,3 +1,5 @@
+import eventlet
+eventlet.monkey_patch()
 from quiz import create_app, socketio
 
 app = create_app()

@@ -29,6 +29,7 @@ def create_app(config_class=Config):
 
     with app.app_context():
         from quiz import models
+        from quiz import socket_handlers
 
     register_routes(app)
     return app
