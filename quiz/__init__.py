@@ -1,11 +1,11 @@
 from flask import Flask
+from flask_jwt_extended import JWTManager
 from config import Config
-from flask_socketio import SocketIO
+from.socketio_instance import socketio
 from db import db, migrate
 from . import models
 from .routes import register_routes
 
-socketio = SocketIO(cors_allowed_origins="*")
 
 def create_app(config_class=Config):
     """
@@ -26,6 +26,8 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     socketio.init_app(app)
+
+    jwt = JWTManager(app)
 
     with app.app_context():
         from quiz import models

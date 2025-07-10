@@ -1,8 +1,8 @@
 from flask import Blueprint, jsonify, request, current_app
 from quiz.models import db, GameSession, Player
 from quiz.schemas.sessions import GameSessionSchema, PlayerSchema, ScoreboardPlayerSchema
-from flask_socketio import emit
-from quiz.utils.jwt_helper import generate_token
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from quiz import socketio
 
 bp = Blueprint('sessions', __name__, url_prefix='/sessions')
 
@@ -11,6 +11,13 @@ sessions_schema = GameSessionSchema(many=True)
 player_schema = PlayerSchema()
 players_schema = PlayerSchema(many=True)
 scoreboard_schema = ScoreboardPlayerSchema(many=True)
+
+@bp.route('/protected', methods=['GET'])
+@jwt_required()
+def protected():
+    player_id = int(get_jwt_identity())
+    return jsonify({'message': f'Hello, Player {player_id}'}), 200
+
 
 @bp.route('/', methods=['POST'])
 def create_session():
@@ -44,6 +51,7 @@ def join_session(code):
     Join an existing session by code.
     Required JSON with 'name' field.
     """
+
     session = GameSession.query.filter_by(code=code).first_or_404()
     if not session.is_active:
         return jsonify({'error': 'Session is no longer active'}), 403
@@ -58,19 +66,20 @@ def join_session(code):
     db.session.add(player)
     db.session.commit()
 
+    access_token = create_access_token(identity=str(player.id))
+
     try:
-        emit('player_joined', {
+        socketio.emit('player_joined', {
             'id': player.id,
             'name': player.name,
         }, to=code)
     except Exception as e:
         current_app.logger.warning(f'Emit failed for session {code}: {e}')
 
-    token = generate_token({'player_id': player.id})
 
     return jsonify({
         'player': player_schema.dump(player),
-        'token': token
+        'access_token': access_token
     }), 201
 
 

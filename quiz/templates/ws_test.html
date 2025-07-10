@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket test</title>
+</head>
+<body>
+    <h1>WebSocket Test</h1>
+    <p>Status: <span id="status">Disconnected</span></p>
+    <ul id="events"></ul>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        const socket = io("http://localhost:5000");  // lub inny port, jeśli używasz np. 8000
+
+        socket.on("connect", () => {
+            document.getElementById("status").textContent = "Connected";
+            
+            socket.emit("join", {
+                room: "T9JYO6ND",
+                username: "Listener"
+            });
+        });
+
+        socket.on("player_joined", data => {
+            const li = document.createElement("li");
+            li.textContent = `Player joined: ${data.name} (id: ${data.id || "?"})`;
+            document.getElementById("events").appendChild(li);
+        });
+    </script>
+</body>
+</html>
