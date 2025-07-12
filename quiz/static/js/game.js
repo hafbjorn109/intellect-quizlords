@@ -94,37 +94,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    async function startRound() {
-        try {
-            const res = await fetch(`/sessions/${sessionCode}/rounds/start`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'}
-            });
-
-            const data = await res.json();
-
-            if (data.error) {
-                alert(JSON.stringify(data.error));
-                return;
-            }
-
-            const chooser = data.chooser;
-            const roundNumber = data.round_number;
-
-            document.getElementById('chooser-display').textContent = `Chooser: ${chooser.name}`;
-            document.getElementById('round-header').textContent = `Round ${roundNumber} of 10`;
-            document.getElementById('round-section').style.display = 'block';
-
-            if (chooser.id === playerId) {
-                await loadCategories();
-                document.getElementById('category-pick-section').style.display = 'block';
-            }
-
-        } catch (err) {
-            console.error('Error starting round:', err)
-        }
-    }
-
     async function setupRound() {
         const categoryId = document.getElementById('category-select').value;
 
@@ -132,7 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const res = await fetch(`/sessions/${sessionCode}/rounds/setup`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({categoryId: parseInt(categoryId)})
+                body: JSON.stringify({category_id: parseInt(categoryId)})
             });
 
             const data = await res.json();
@@ -148,8 +117,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             document.getElementById("category-pick-section").style.display = "none";
-            document.getElementById("question-text").textContent = data.question.text;
-            document.getElementById("question-section").style.display = "block";
 
         } catch (err) {
             console.error('Error setting up round:', err);
@@ -204,6 +171,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Socket listeners
+    socket.on('round_started', data => {
+        console.log("Round started:", data);
+
+        document.getElementById("category-pick-section").style.display = "none";
+        document.getElementById("question-text").textContent = data.question.text;
+        document.getElementById("question-section").style.display = "block";
+
+        document.getElementById("round-header").textContent =
+            `Round ${data.round_number} of 10`;
+    });
+
     socket.on('player_joined', async (data) => {
         console.log('Player joined:', data);
         await loadPlayers();
@@ -214,9 +192,25 @@ document.addEventListener("DOMContentLoaded", () => {
         await loadPlayers();
     })
 
+    socket.on('game_started', async (data) => {
+        console.log('Game started!');
+
+        document.getElementById('lobby-section').style.display = 'none';
+
+        document.getElementById('chooser-display').textContent = `Chooser: ${data.chooser.name}`;
+        document.getElementById('round-header').textContent = `Round ${data.round_number} of 10`;
+        document.getElementById('round-section').style.display = 'block';
+
+        if (data.chooser.id === playerId) {
+            await loadCategories();
+            document.getElementById('category-pick-section').style.display = 'block';
+        }
+    });
+
     // Global functions to bind to HTML buttons
     window.joinSession = joinSession;
     window.toggleReady = toggleReady;
+    window.setupRound = setupRound;
 });
 
 

@@ -1,8 +1,9 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from quiz.models import db, Round, GameSession, Question, Player, Answer, AnswerGiven
 from quiz.schemas.sessions import RoundSchema, ChooserSchema
-from quiz.schemas.questions import AnswerGivenSchema, CategoryPickSchema
+from quiz.schemas.questions import AnswerGivenSchema, CategoryPickSchema, QuestionSchema
 import random
+from quiz import socketio
 
 bp = Blueprint('rounds', __name__, url_prefix='/sessions/<string:code>/rounds')
 
@@ -10,27 +11,9 @@ round_schema = RoundSchema()
 answer_given_schema = AnswerGivenSchema()
 category_pick_schema = CategoryPickSchema()
 chooser_schema = ChooserSchema()
+question_schema = QuestionSchema()
 
 MAX_ROUNDS = 10
-
-@bp.route('/start', methods=['POST'])
-def first_chooser(code):
-    """
-    Selects a random player to start the first round (chooser).
-    """
-    session = GameSession.query.filter_by(code=code).first_or_404()
-    if not session.is_active:
-        return jsonify({'error': 'Session is no longer active'}), 403
-
-    if not session.players:
-        return jsonify({'error': 'No players in sessions'}), 400
-
-    chooser = random.choice(session.players)
-    session.chooser_id = chooser.id
-    db.session.commit()
-
-    return jsonify({'chooser': chooser_schema.dump(chooser)}), 200
-
 
 @bp.route('/setup', methods=['POST'])
 def setup_round(code):
@@ -41,7 +24,7 @@ def setup_round(code):
     if not session.is_active:
         return jsonify({'error': 'Session is no longer active'}), 403
 
-    existing_rounds = Round.query.filter_by(code=code).first_or_404()
+    existing_rounds = Round.query.filter_by(session_id=session.id).count()
     if existing_rounds >= MAX_ROUNDS:
         session.is_active = False
         db.session.commit()
@@ -83,6 +66,14 @@ def setup_round(code):
     )
     db.session.add(round)
     db.session.commit()
+
+    try:
+        socketio.emit('round_started', {
+            'question': question_schema.dump(question),
+            'round_number': existing_rounds + 1
+        }, to=code)
+    except Exception as e:
+        current_app.logger.warning(f'[Setup Round] Emit failed for session {code}: {e}')
 
     return jsonify(round_schema.dump(round)), 201
 

@@ -1,5 +1,8 @@
 from flask_socketio import join_room, emit
 from quiz import socketio
+from .models import GameSession, Player
+import random
+from quiz.models import db
 
 @socketio.on('join')
 def handle_join(data):
@@ -25,3 +28,21 @@ def handle_ready_changed(data):
             'player_id': player_id,
             'is_ready': is_ready,
         }, to=room)
+
+        session = GameSession.query.filter_by(code=room).first()
+        if session:
+            players = Player.query.filter_by(session_id=session.id).all()
+            all_ready = all(p.is_ready for p in players)
+
+            if all_ready:
+                chooser = random.choice(players)
+                session.chooser_id = chooser.id
+                db.session.commit()
+
+                emit('game_started', {
+                    'chooser': {
+                        'id': chooser.id,
+                        'name': chooser.name,
+                    },
+                    'round_number': 1
+                }, to=room)
