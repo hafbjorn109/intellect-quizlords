@@ -13,3 +13,15 @@ def handle_join(data):
             'room': room,
             'username': username,
         }, to=room)
+
+@socketio.on('player_ready_changed')
+def handle_ready_changed(data):
+    room = data.get('room')
+    player_id = data.get('player_id')
+    is_ready = data.get('is_ready')
+
+    if room and player_id is not None:
+        emit('player_ready_updated', {
+            'player_id': player_id,
+            'is_ready': is_ready,
+        }, to=room)

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Game</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script defer src="{{ url_for('static', filename='js/game.js') }}"></script>
+    <link rel="stylesheet" href ="{{ url_for('static', filename='css/game.css') }}">
+</head>
+<body>
+    <h1>Game Session: {{ code }}</h1>
+
+    <div id="join-section">
+        <label>Enter your name:</label>
+        <input type="text" id="player-name" />
+        <button onclick="joinSession()">Join</button>
+    </div>
+
+    <div id="lobby-section" style="display: none;">
+        <h2>Players:</h2>
+        <ul id="player-list"></ul>
+
+        <button id="ready-button" onclick="toggleReady()">Set Ready</button>
+    </div>
+
+    <script>
+        const sessionCode = "{{ code }}";
+    </script>
+</body>
+</html>

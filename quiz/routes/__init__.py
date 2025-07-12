@@ -3,7 +3,7 @@ from .questions import bp as questions_bp
 from .answers import bp as answers_bp
 from .sessions import bp as sessions_bp
 from .rounds import bp as rounds_bp
-from .ws_test import bp as ws_test_bp
+from .views import bp as views_bp
 
 
 def register_routes(app):
@@ -22,4 +22,4 @@ def register_routes(app):
     app.register_blueprint(answers_bp)
     app.register_blueprint(sessions_bp)
     app.register_blueprint(rounds_bp)
-    app.register_blueprint(ws_test_bp)
+    app.register_blueprint(views_bp)

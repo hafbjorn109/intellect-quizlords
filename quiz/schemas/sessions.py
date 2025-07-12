@@ -5,7 +5,7 @@ from .questions import QuestionSchema
 class PlayerSchema(Schema):
     id = fields.Int(dump_only=True)
     name = fields.Str(required=True)
-    is_ready = fields.Bool(required=True)
+    is_ready = fields.Bool(load_default=False)
     session_id = fields.Int(dump_only=True)
     score = fields.Int(dump_only=True)
 
