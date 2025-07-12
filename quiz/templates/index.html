@@ -2,42 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Join a Game</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/game.css') }}">
-    <style>
-        .join-container {
-            max-width: 400px;
-            margin: 3em auto;
-            padding: 2em;
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            text-align: center;
-        }
-        input[type="text"] {
-            width: 80%;
-            margin-bottom: 1em;
-        }
-    </style>
+    <title>Join or Create Game</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <script defer src="{{ url_for('static', filename='js/index.js') }}"></script>
 </head>
 <body>
     <div class="join-container">
-        <h1>Join a Game</h1>
+        <h1>Intellect Quizzlords</h1>
+
         <input type="text" id="code-input" placeholder="Enter session code" />
-        <br />
-        <button onclick="redirectToGame()">Join</button>
+        <button id="join-btn">Join Game</button>
+
+        <hr />
+
+        <button id="create-btn">Create New Game</button>
     </div>
-
-    <script>
-        function redirectToGame() {
-            const code = document.getElementById("code-input").value.trim();
-            if (!code) {
-                alert("Please enter a session code.");
-                return;
-            }
-
-            window.location.href = `/game/${code}`;
-        }
-    </script>
 </body>
 </html>
