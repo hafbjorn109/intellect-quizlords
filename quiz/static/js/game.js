@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const players = await res.json();
 
             if (players.error) {
-                alert(players.error);
+                alert(JSON.stringify(players.error));
                 return;
             }
 
@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await res.json();
 
             if (data.error) {
-                alert(data.error);
+                alert(JSON.stringify(data.error));
                 return;
             }
 
@@ -91,6 +91,115 @@ document.addEventListener("DOMContentLoaded", () => {
             })
         } catch (err) {
             console.error('Error toggling ready:', err)
+        }
+    }
+
+    async function startRound() {
+        try {
+            const res = await fetch(`/sessions/${sessionCode}/rounds/start`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+
+            const data = await res.json();
+
+            if (data.error) {
+                alert(JSON.stringify(data.error));
+                return;
+            }
+
+            const chooser = data.chooser;
+            const roundNumber = data.round_number;
+
+            document.getElementById('chooser-display').textContent = `Chooser: ${chooser.name}`;
+            document.getElementById('round-header').textContent = `Round ${roundNumber} of 10`;
+            document.getElementById('round-section').style.display = 'block';
+
+            if (chooser.id === playerId) {
+                await loadCategories();
+                document.getElementById('category-pick-section').style.display = 'block';
+            }
+
+        } catch (err) {
+            console.error('Error starting round:', err)
+        }
+    }
+
+    async function setupRound() {
+        const categoryId = document.getElementById('category-select').value;
+
+        try {
+            const res = await fetch(`/sessions/${sessionCode}/rounds/setup`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({categoryId: parseInt(categoryId)})
+            });
+
+            const data = await res.json();
+            if (data.error) {
+                alert(JSON.stringify(data.error));
+                return;
+            }
+
+            if (data.game_over) {
+                alert('Game Over!');
+                await showScoreboard();
+                return;
+            }
+
+            document.getElementById("category-pick-section").style.display = "none";
+            document.getElementById("question-text").textContent = data.question.text;
+            document.getElementById("question-section").style.display = "block";
+
+        } catch (err) {
+            console.error('Error setting up round:', err);
+        }
+    }
+
+    async function loadCategories() {
+        try {
+            const res = await fetch('/categories');
+            const data = await res.json();
+
+            if (data.errors) {
+                alert(JSON.stringify(data.error));
+                return;
+            }
+
+            const select = document.getElementById('category-select');
+            select.innerHTML = '';
+
+            data.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                select.appendChild(option);
+            })
+
+        } catch (err) {
+            console.error('Error loading categories:', err)
+        }
+    }
+
+    async function showScoreboard() {
+        try {
+            const res = await fetch(`/sessions/${sessionCode}/scoreboard`);
+            const data = await res.json();
+
+            const section = document.createElement('div');
+            section.innerHTML = '<h2> Final Scoreboard</h2><ul></ul>'
+            const ul = section.querySelector('ul');
+
+            data.forEach(p => {
+                const li = document.createElement('li');
+                li.textContent = `${p.name} - ${p.score} pts`;
+                ul.appendChild(li);
+            });
+            document.body.innerHTML = '';
+            document.body.appendChild(section);
+
+        } catch (err) {
+            console.error('Could not fetch scoreboeard:', err)
         }
     }
 

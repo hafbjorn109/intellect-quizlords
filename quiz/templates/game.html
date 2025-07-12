@@ -23,6 +23,23 @@
         <button id="ready-button" onclick="toggleReady()">Set Ready</button>
     </div>
 
+    <div id="round-section" style="display: none;">
+    <h2 id="round-header">Round</h2>
+    <div id="chooser-display"></div>
+
+    <div id="category-pick-section" style="display: none;">
+        <label>Pick a category:</label>
+        <select id="category-select"></select>
+        <button onclick="setupRound()">Start Round</button>
+    </div>
+
+    <div id="question-section" style="display: none;">
+        <h3 id="question-text"></h3>
+        <!-- TODO: Add answer buttons here -->
+    </div>
+</div>
+
+
     <script>
         const sessionCode = "{{ code }}";
     </script>

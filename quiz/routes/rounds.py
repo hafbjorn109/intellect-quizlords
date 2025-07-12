@@ -11,6 +11,8 @@ answer_given_schema = AnswerGivenSchema()
 category_pick_schema = CategoryPickSchema()
 chooser_schema = ChooserSchema()
 
+MAX_ROUNDS = 10
+
 @bp.route('/start', methods=['POST'])
 def first_chooser(code):
     """
@@ -38,6 +40,13 @@ def setup_round(code):
     session = GameSession.query.filter_by(code=code).first_or_404()
     if not session.is_active:
         return jsonify({'error': 'Session is no longer active'}), 403
+
+    existing_rounds = Round.query.filter_by(code=code).first_or_404()
+    if existing_rounds >= MAX_ROUNDS:
+        session.is_active = False
+        db.session.commit()
+
+        return jsonify({'message': 'Game over', 'game_over': True}), 200
 
     data = request.get_json()
     errors = category_pick_schema.validate(data)
