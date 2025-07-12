@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let playerId = null;
     let jwtToken = null;
     let isReady = false;
+    let currentRoundId = null;
 
     async function joinSession() {
         const name = document.getElementById('player-name').value;
@@ -170,16 +171,68 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    async function submitAnswer(answerId) {
+        if (!currentRoundId || !playerId) {
+            alert("Missing round or player info");
+            return;
+        }
+
+        try {
+            const res = await fetch(`/sessions/${sessionCode}/rounds/answer`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    round_id: currentRoundId,
+                    player_id: playerId,
+                    answer_id: answerId
+                })
+            });
+
+            const data = await res.json();
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            // Disable all buttons
+            document.querySelectorAll("#answer-options button").forEach(btn => {
+                btn.disabled = true;
+            });
+
+            if (data.is_correct) {
+                alert("Correct!");
+            } else {
+                alert("Incorrect!");
+            }
+
+        } catch (err) {
+            console.error("Error submitting answer:", err);
+        }
+}
+
     // Socket listeners
     socket.on('round_started', data => {
         console.log("Round started:", data);
 
         document.getElementById("category-pick-section").style.display = "none";
-        document.getElementById("question-text").textContent = data.question.text;
-        document.getElementById("question-section").style.display = "block";
+        document.getElementById("lobby-section").style.display = "none";
 
-        document.getElementById("round-header").textContent =
-            `Round ${data.round_number} of 10`;
+        const q = data.question;
+        currentRoundId = data.question.round_id || data.round_id;
+
+        document.getElementById("question-text").textContent = q.text;
+        const container = document.getElementById("answer-options");
+        container.innerHTML = "";
+
+        q.answers.forEach(answer => {
+            const btn = document.createElement("button");
+            btn.textContent = answer.text;
+            btn.onclick = () => submitAnswer(answer.id);
+            btn.dataset.answered = "false";
+            container.appendChild(btn);
+        });
+
+        document.getElementById("question-section").style.display = "block";
     });
 
     socket.on('player_joined', async (data) => {

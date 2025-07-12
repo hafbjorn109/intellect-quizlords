@@ -70,6 +70,7 @@ def setup_round(code):
     try:
         socketio.emit('round_started', {
             'question': question_schema.dump(question),
+            'round_id': round.id,
             'round_number': existing_rounds + 1
         }, to=code)
     except Exception as e:
