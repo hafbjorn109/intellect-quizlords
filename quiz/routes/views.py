@@ -4,6 +4,10 @@ from quiz.models import GameSession
 
 bp = Blueprint('views', __name__)
 
+@bp.route('/')
+def index():
+    return render_template('index.html')
+
 @bp.route('/game/<string:code>')
 def game_view(code):
     session = GameSession.query.filter_by(code=code).first()
