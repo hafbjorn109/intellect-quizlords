@@ -208,7 +208,20 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (err) {
             console.error("Error submitting answer:", err);
         }
-}
+    }
+
+    function updateScoreboard(players) {
+        const list = document.getElementById('scoreboard-list');
+        list.innerHTML = '';
+
+        players.forEach(p => {
+            const li = document.createElement('li');
+            li.textContent = `${p.name}: ${p.score} pts`;
+            list.appendChild(li);
+        });
+
+        document.getElementById('scoreboard-section').style.display = 'block';
+    }
 
     // Socket listeners
     socket.on('round_started', data => {
@@ -243,7 +256,7 @@ document.addEventListener("DOMContentLoaded", () => {
     socket.on('player_ready_updated', async (data) => {
         console.log('Ready status updated:', data);
         await loadPlayers();
-    })
+    });
 
     socket.on('game_started', async (data) => {
         console.log('Game started!');
@@ -257,6 +270,20 @@ document.addEventListener("DOMContentLoaded", () => {
         if (data.chooser.id === playerId) {
             await loadCategories();
             document.getElementById('category-pick-section').style.display = 'block';
+        }
+    });
+
+    socket.on('chooser_turn', async (data) => {
+        document.getElementById('question-section').style.display = 'none';
+        document.getElementById('category-pick-section').style.display = 'none';
+        document.getElementById('round-header').textContent = `Round ${data.round_number} of 10`;
+        document.getElementById('chooser-display').textContent = `New chooser: ${data.chooser.name}`;
+
+        updateScoreboard(data.scoreboard);
+
+        if (data.chooser.id === playerId) {
+            await loadCategories();
+            document.getElementById('category-pick-section').style.display = 'block'
         }
     });
 

@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request, current_app
 from quiz.models import db, Round, GameSession, Question, Player, Answer, AnswerGiven
-from quiz.schemas.sessions import RoundSchema, ChooserSchema
+from quiz.schemas.sessions import RoundSchema, ChooserSchema, PlayerSchema
 from quiz.schemas.questions import AnswerGivenSchema, CategoryPickSchema, QuestionSchema
 import random
 from quiz import socketio
@@ -12,6 +12,7 @@ answer_given_schema = AnswerGivenSchema()
 category_pick_schema = CategoryPickSchema()
 chooser_schema = ChooserSchema()
 question_schema = QuestionSchema()
+players_schema = PlayerSchema(many=True)
 
 MAX_ROUNDS = 10
 
@@ -169,6 +170,39 @@ def given_answer(code):
 
     db.session.add(given)
     db.session.commit()
+
+    total_players = Player.query.filter_by(session_id=session.id).count()
+    total_answers = AnswerGiven.query.filter_by(round_id=round.id).count()
+
+    if total_answers >= total_players:
+        players = Player.query.filter_by(session_id=session.id).order_by(Player.id).all()
+
+        try:
+            current_index = next(i for i, p in enumerate(players) if p.id == session.chooser_id)
+        except StopIteration:
+            current_app.logger.warning(f'Chooser with ID {session.chooser_id} not found')
+            return jsonify({'error': 'Current chooser not found'}), 400
+
+        next_index = (current_index + 1) % len(players)
+        next_player = players[next_index]
+
+        session.chooser_id = next_player.id
+        db.session.commit()
+
+        scoreboard_players = Player.query.filter_by(session_id=session.id).order_by(Player.score.desc()).all()
+        scoreboard_data = players_schema.dump(scoreboard_players)
+
+        round_number = Round.query.filter_by(session_id=session.id).count() + 1
+
+
+        socketio.emit('chooser_turn', {
+            'chooser': {
+                'id': next_player.id,
+                'name': next_player.name
+            },
+            'scoreboard': scoreboard_data,
+            'round_number': round_number
+        }, to=code)
 
     return jsonify(answer_given_schema.dump(given)), 201
 
