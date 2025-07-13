@@ -2,7 +2,6 @@ from flask import Blueprint, jsonify, request, current_app
 from quiz.models import db, Round, GameSession, Question, Player, Answer, AnswerGiven
 from quiz.schemas.sessions import RoundSchema, ChooserSchema, PlayerSchema
 from quiz.schemas.questions import AnswerGivenSchema, CategoryPickSchema, QuestionSchema
-import random
 from quiz import socketio
 
 bp = Blueprint('rounds', __name__, url_prefix='/sessions/<string:code>/rounds')
@@ -14,7 +13,7 @@ chooser_schema = ChooserSchema()
 question_schema = QuestionSchema()
 players_schema = PlayerSchema(many=True)
 
-MAX_ROUNDS = 10
+MAX_ROUNDS = 1
 
 @bp.route('/setup', methods=['POST'])
 def setup_round(code):
@@ -26,11 +25,6 @@ def setup_round(code):
         return jsonify({'error': 'Session is no longer active'}), 403
 
     existing_rounds = Round.query.filter_by(session_id=session.id).count()
-    if existing_rounds >= MAX_ROUNDS:
-        session.is_active = False
-        db.session.commit()
-
-        return jsonify({'message': 'Game over', 'game_over': True}), 200
 
     data = request.get_json()
     errors = category_pick_schema.validate(data)
@@ -176,6 +170,24 @@ def given_answer(code):
 
     if total_answers >= total_players:
         players = Player.query.filter_by(session_id=session.id).order_by(Player.id).all()
+
+        existing_rounds = Round.query.filter_by(session_id=session.id).count()
+        if existing_rounds >= MAX_ROUNDS:
+            session.is_active = False
+            db.session.commit()
+
+            try:
+                players = Player.query.filter_by(session_id=session.id).order_by(Player.score.desc()).all()
+                socketio.emit('game_over', {
+                    'scoreboard': [
+                        {'name': p.name, 'score': p.score}
+                        for p in players
+                    ]
+                }, to=code)
+            except Exception as e:
+                current_app.logger.warning(f'[Setup Round] Emit game_over failed for session {code}: {e}')
+
+            return jsonify({'message': 'Game over', 'game_over': True}), 200
 
         try:
             current_index = next(i for i, p in enumerate(players) if p.id == session.chooser_id)

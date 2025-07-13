@@ -17,6 +17,7 @@ def handle_join(data):
             'username': username,
         }, to=room)
 
+
 @socketio.on('player_ready_changed')
 def handle_ready_changed(data):
     room = data.get('room')

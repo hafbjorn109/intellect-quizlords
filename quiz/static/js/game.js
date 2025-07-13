@@ -112,8 +112,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (data.game_over) {
-                alert('Game Over!');
-                await showScoreboard();
                 return;
             }
 
@@ -286,6 +284,34 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById('category-pick-section').style.display = 'block'
         }
     });
+
+    socket.on('game_over', data => {
+        const scoreboard = data.scoreboard;
+
+        document.getElementById('scoreboard-section').style.display = 'none';
+        document.getElementById('category-pick-section').style.display = 'none';
+        document.getElementById('question-section').style.display = 'none';
+        document.getElementById('chooser-display').style.display = 'none';
+        document.getElementById('round-header').style.display = 'none';
+        document.getElementById('round-section').style.display = 'none';
+
+        const gameOverHeader = document.createElement('h2');
+        gameOverHeader.innerHTML = 'Game Over - Final Scoreboard';
+        document.body.appendChild(gameOverHeader)
+
+        const table = document.createElement('table');
+        table.classList.add('scoreboard-table');
+
+        const headerRow = table.insertRow();
+        headerRow.innerHTML = '<th>Player</th><th>Score</th>';
+
+        scoreboard.forEach(player => {
+            const row = table.insertRow();
+            row.innerHTML = `<td>${player.name}</td><td>${player.score}</td>`;
+        });
+
+        document.body.appendChild(table);
+    })
 
     // Global functions to bind to HTML buttons
     window.joinSession = joinSession;
