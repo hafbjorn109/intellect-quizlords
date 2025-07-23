@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, validates, ValidationError
 from .questions import QuestionSchema
 
 
@@ -9,6 +9,11 @@ class PlayerSchema(Schema):
     session_id = fields.Int(dump_only=True)
     score = fields.Int(dump_only=True)
     is_connected = fields.Bool(load_default=True)
+
+    @validates('name')
+    def validate_name(self, value, **kwargs):
+        if not value.strip():
+            raise ValidationError('Name cannot be empty')
 
 
 class ScoreboardPlayerSchema(Schema):

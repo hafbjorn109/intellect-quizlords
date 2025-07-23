@@ -1,4 +1,6 @@
 from flask import Blueprint, jsonify, request, current_app
+from marshmallow import ValidationError
+
 from quiz.models import db, GameSession, Player
 from quiz.schemas.sessions import GameSessionSchema, PlayerSchema, ScoreboardPlayerSchema
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
@@ -58,11 +60,12 @@ def join_session(code):
 
     data = request.get_json()
 
-    errors = player_schema.validate(data)
-    if errors:
-        return jsonify({'error': errors}), 400
+    try:
+        validated = player_schema.load(data)
+    except ValidationError as e:
+        return jsonify({'error': e.messages}), 400
 
-    player = Player(name=data['name'], session_id=session.id)
+    player = Player(name=validated['name'], session_id=session.id)
     db.session.add(player)
     db.session.commit()
 
