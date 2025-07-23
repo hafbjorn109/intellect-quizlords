@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <script defer src="{{ url_for('static', filename='js/admin.js') }}"></script>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: auto; padding: 2rem; }
+        section { margin-bottom: 2rem; }
+        input, button, select { margin: 0.25rem; }
+        .block { display: block; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <h1>Admin Panel</h1>
+
+    <nav>
+        <button onclick="showView('add-category')">Add Category</button>
+        <button onclick="showView('add-question')">Add Question</button>
+        <button onclick="showView('edit-categories')">Edit Categories</button>
+        <button onclick="showView('edit-questions')">Edit Questions</button>
+        <button onclick="flushSessions()">Flush old sessions</button>
+    </nav>
+
+    <hr>
+
+    <main id="admin-content">
+
+    </main>
+</body>
+</html>

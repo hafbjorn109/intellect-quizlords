@@ -14,3 +14,7 @@ def game_view(code):
     if session is None:
         abort(404)
     return render_template('game.html', code=code)
+
+@bp.route('/admin')
+def admin_view():
+    return render_template('admin.html')
