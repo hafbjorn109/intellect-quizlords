@@ -6,13 +6,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         switch (viewName) {
             case 'add-category':
-                renderAddCategoryForm(container);
+                await renderAddCategoryForm(container);
                 break;
             case 'add-question':
                 await renderAddQuestionForm(container);
                 break;
             case 'edit-categories':
-                renderEditCategoriesVieW(container);
+                await renderEditCategoriesView(container);
                 break;
             case 'edit-questions':
                 renderEditQuestionsView(container);
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderAddCategoryForm(container) {
+    async function renderAddCategoryForm(container) {
         const form = document.createElement('form');
         form.innerHTML = `
             <h2>Add new category</h2>
@@ -193,12 +193,96 @@ document.addEventListener('DOMContentLoaded', () => {
         div.innerHTML = `
             <input type="text" class="answer-text" placeholder="Answer">
             <label><input type="checkbox" class="answer-correct"> Correct</label>
-            <button type="button" onclick="this.parentElement.remove()">❌</button>
+            <button type="button" onclick="this.parentElement.remove()"> Delete </button>
         `;
 
         container.appendChild(div);
     }
 
-    window.showView = showView;
+    async function renderEditCategoriesView(container) {
+        const heading = document.createElement('h2');
+        container.appendChild(heading);
 
+        const list = document.createElement('ul');
+        list.id = 'edit-category-list';
+        container.appendChild(list);
+
+        try {
+            const res = await fetch('/categories/');
+            const categories = await res.json();
+
+            if (!Array.isArray(categories)) {
+                list.innerHTML = '<li>Categories not loaded.</li>'
+                return;
+            }
+
+            categories.forEach(cat => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span class='category-name'> ${cat.name} </span>
+                    <button class='edit-btn'> Edit </button>
+                    <button class='delete-btn'> Delete </button>
+                `;
+
+                li.querySelector('.edit-btn').onclick = () => {
+                    const span = li.querySelector('.category-name');
+                    const oldName = span.textContent.trim();
+
+                    const input = document.createElement('input');
+                    input.value = oldName;
+                    input.classList.add('category-input');
+
+                    const saveBtn = document.createElement('button');
+                    saveBtn.textContent = 'Save';
+
+                    span.replaceWith(input);
+
+                    const editBtn = li.querySelector('.edit-btn');
+                    editBtn.replaceWith(saveBtn);
+
+                    saveBtn.onclick = async () => {
+                        const newName = input.value.trim();
+                        if (!newName) return alert('Name can not be empty!');
+
+                        const response = await fetch(`/categories/${cat.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name: newName })
+                        });
+
+                        if (response.ok) {
+                            await showView('edit-categories');
+                        } else {
+                            alert('Edit failed.');
+                        }
+                    };
+                };
+
+                li.querySelector('.delete-btn').onclick = async () => {
+                    if (!confirm(`Are you sure you want to delete category ${cat.name}?`)) return;
+
+                    const response = await fetch(`/categories/${cat.id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        li.remove();
+                    } else {
+                        alert ('Category not deleted correctly.');
+                    }
+                };
+
+                list.appendChild(li);
+            });
+
+            if (categories.length === 0){
+                list.innerHTML = '<li>No categories</li>'
+            }
+
+        } catch (err) {
+            console.error('Error:', err);
+        }
+    }
+
+    window.showView = showView;
 })
