@@ -1,4 +1,6 @@
 from flask import Blueprint, jsonify, request, current_app
+from flask_jwt_extended import jwt_required, get_jwt_identity
+
 from quiz.models import db, Round, GameSession, Question, Player, Answer, AnswerGiven
 from quiz.schemas.sessions import RoundSchema, ChooserSchema, PlayerSchema
 from quiz.schemas.questions import AnswerGivenSchema, CategoryPickSchema, QuestionSchema
@@ -116,6 +118,7 @@ def get_current_round(code):
 
 
 @bp.route('/answer', methods=['POST'])
+@jwt_required()
 def given_answer(code):
     """
     Submit an answer for a round by a player.
@@ -141,6 +144,9 @@ def given_answer(code):
     player = Player.query.get_or_404(data['player_id'])
     if player.session_id != session.id:
         return jsonify({'error': 'Player does not belong to this session'}), 403
+
+    if int(get_jwt_identity()) != player.id:
+        return jsonify({'error': 'Unauthorized'}), 403
 
     existing = AnswerGiven.query.filter_by(player_id=player.id, round_id=round.id).first()
     if existing:
