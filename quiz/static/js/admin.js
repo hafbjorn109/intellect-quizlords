@@ -284,5 +284,218 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function renderEditQuestionsView(container) {
+        const heading = document.createElement('h2');
+        heading.textContent = 'Edit questions';
+        container.appendChild(heading);
+
+        const categorySelect = document.createElement('select');
+        categorySelect.innerHTML = '<option value=""> -- choose category -- </option>';
+        container.appendChild(categorySelect);
+
+        const questionList = document.createElement('ul');
+        container.appendChild(questionList);
+
+        const res = await fetch('/categories/');
+        const categories = await res.json();
+
+        categories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat.id;
+            opt.textContent = cat.name;
+            categorySelect.appendChild(opt);
+        });
+
+        categorySelect.onchange = async () => {
+            const selectedId = parseInt(categorySelect.value);
+            questionList.innerHTML = '';
+
+            if (!selectedId) return;
+
+            try {
+                const res = await fetch('/questions/');
+                const questions = await res.json();
+
+                const filtered = questions.filter(q => q.category_id === selectedId);
+
+                if (filtered.length === 0) {
+                    questionList.innerHTML = '<li> No questions in this category </li>';
+                    return;
+                }
+
+                filtered.forEach(q => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <span class='question-text'>${q.text}</span>
+                        <button class='edit-btn'>Edit</button>
+                        <button class='delete-btn'>Delete</button>
+                    `;
+
+                    li.querySelector('.edit-btn').onclick = async () => {
+                        const span = li.querySelector('.question-text');
+                        const oldText = span.textContent.trim();
+
+
+                        const input = document.createElement('input');
+                        input.value = oldText;
+                        span.replaceWith(input);
+
+                        const saveBtn = document.createElement('button');
+                        saveBtn.textContent = 'Save';
+
+                        li.querySelector('.edit-btn').replaceWith(saveBtn);
+
+
+                        const answerList = document.createElement('ul');
+                        li.appendChild(answerList);
+
+
+                        const res = await fetch('/answers/');
+                        const allAnswers = await res.json();
+                        const answers = allAnswers.filter(a => parseInt(a.question_id) === q.id);
+
+
+                        const answerInputs = [];
+
+                        answers.forEach(ans => {
+                            const ansLi = document.createElement('li');
+                            const ansInput = document.createElement('input');
+                            ansInput.value = ans.text;
+
+                            const ansCheck = document.createElement('input');
+                            ansCheck.type = 'checkbox';
+                            ansCheck.checked = ans.is_correct;
+
+                            const deleteBtn = document.createElement('button');
+                            deleteBtn.textContent = 'Delete';
+
+                            ansLi.appendChild(ansInput);
+                            ansLi.appendChild(ansCheck);
+                            ansLi.appendChild(deleteBtn);
+                            answerList.appendChild(ansLi);
+
+                            answerInputs.push({
+                                id: ans.id,
+                                input: ansInput,
+                                checkbox: ansCheck,
+                                deleted: false
+                            });
+
+                            deleteBtn.onclick = () => {
+                                ansLi.remove();
+                                const target = answerInputs.find(a => a.id === ans.id);
+                                if (target) target.deleted = true;
+                            };
+                        });
+
+
+                        const newAnswerInput = document.createElement('input');
+                        const newAnswerCheckbox = document.createElement('input');
+                        newAnswerCheckbox.type = 'checkbox';
+                        const addNewBtn = document.createElement('button');
+                        addNewBtn.textContent = 'Add';
+
+                        const newAnsLi = document.createElement('li');
+                        newAnsLi.appendChild(newAnswerInput);
+                        newAnsLi.appendChild(newAnswerCheckbox);
+                        newAnsLi.appendChild(addNewBtn);
+                        answerList.appendChild(newAnsLi);
+
+                        const newAnswers = [];
+
+                        addNewBtn.onclick = () => {
+                            const text = newAnswerInput.value.trim();
+                            const isCorrect = newAnswerCheckbox.checked;
+                            if (!text) return alert('New answer text is empty.');
+
+
+                            newAnswers.push({ text, is_correct: isCorrect });
+                            const staticLi = document.createElement('li');
+                            staticLi.textContent = `${text} ${isCorrect ? '(✓)' : ''}`;
+                            answerList.insertBefore(staticLi, newAnsLi);
+
+
+                            newAnswerInput.value = '';
+                            newAnswerCheckbox.checked = false;
+                        };
+
+
+                        saveBtn.onclick = async () => {
+                            const newText = input.value.trim();
+                            if (!newText) return alert('Question text can not be empty.');
+
+                            const correctCount =
+                                answerInputs.filter(a => !a.deleted && a.checkbox.checked).length +
+                                newAnswers.filter(a => a.is_correct).length;
+
+                            if (correctCount !== 1) {
+                                return alert('Pick one correct answer.');
+                            }
+
+
+                            await fetch(`/questions/${q.id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ text: newText, category_id: selectedId })
+                            });
+
+
+                            for (let a of answerInputs) {
+                                if (a.deleted) {
+                                    await fetch(`/answers/${a.id}`, { method: 'DELETE' });
+                                } else {
+                                    await fetch(`/answers/${a.id}`, {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            text: a.input.value.trim(),
+                                            is_correct: a.checkbox.checked,
+                                            question_id: q.id
+                                        })
+                                    });
+                                }
+                            }
+
+
+                            for (let a of newAnswers) {
+                                await fetch(`/answers/`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        text: a.text,
+                                        is_correct: a.is_correct,
+                                        question_id: q.id
+                                    })
+                                });
+                            }
+
+                            await showView('edit-questions');
+                        };
+                    };
+
+                    li.querySelector('.delete-btn').onclick = async () => {
+                        if(!confirm('Are you sure you want to delete this question?')) return;
+
+                        const res = await fetch(`/questions/${q.id}`, {
+                            method: 'DELETE'
+                        });
+
+                        if (res.ok) {
+                            li.remove();
+                        } else {
+                            alert('Question is not deleted.');
+                        }
+                    };
+
+                    questionList.appendChild(li);
+                });
+
+            } catch (err) {
+                questionList.innerHTML = '<li>Questions load error.</li>'
+                console.error('Error:', err);
+            }
+        }
+    }
+
     window.showView = showView;
 })
