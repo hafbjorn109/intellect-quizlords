@@ -74,7 +74,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const res = await fetch(`/sessions/${sessionCode}/players/${playerId}/ready`, {
                method: 'PUT',
                headers: {
-                   'Content-Type': 'application/json'
+                   'Content-Type': 'application/json',
+                   'Authorization': `Bearer ${jwtToken}`
                },
                 body: JSON.stringify({ is_ready: isReady })
             });
@@ -119,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            document.getElementById("category-pick-section").style.display = "none";
+            document.getElementById('category-pick-section').style.display = 'none';
 
         } catch (err) {
             console.error('Error setting up round:', err);
@@ -175,14 +176,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function submitAnswer(answerId) {
         if (!currentRoundId || !playerId) {
-            alert("Missing round or player info");
+            alert('Missing round or player info');
             return;
         }
 
         try {
             const res = await fetch(`/sessions/${sessionCode}/rounds/answer`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${jwtToken}`
+                },
                 body: JSON.stringify({
                     round_id: currentRoundId,
                     player_id: playerId,

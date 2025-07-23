@@ -14,13 +14,6 @@ player_schema = PlayerSchema()
 players_schema = PlayerSchema(many=True)
 scoreboard_schema = ScoreboardPlayerSchema(many=True)
 
-@bp.route('/protected', methods=['GET'])
-@jwt_required()
-def protected():
-    player_id = int(get_jwt_identity())
-    return jsonify({'message': f'Hello, Player {player_id}'}), 200
-
-
 @bp.route('/', methods=['POST'])
 def create_session():
     """Create a new session (returns session code)"""
@@ -95,6 +88,7 @@ def get_players(code):
 
 
 @bp.route('/<string:code>/players/<int:player_id>/ready', methods=['PUT'])
+@jwt_required()
 def set_ready(code, player_id):
     """
     Set a player's readiness within a session.
@@ -107,6 +101,9 @@ def set_ready(code, player_id):
 
     if player.session_id != session.id:
         return jsonify({'error': 'Player does not belong to the session'}), 403
+
+    if int(get_jwt_identity()) != player.id:
+        return jsonify({'error': 'Unathorized'}), 403
 
     data = request.get_json()
     errors = player_schema.validate(data, partial=True)
