@@ -87,7 +87,8 @@ def join_session(code):
 def get_players(code):
     """Return all players in a session"""
     session = GameSession.query.filter_by(code=code).first_or_404()
-    return jsonify(players_schema.dump(session.players)), 200
+    connected_players = Player.query.filter_by(session_id=session.id, is_connected=True).all()
+    return jsonify(players_schema.dump(connected_players)), 200
 
 
 @bp.route('/<string:code>/players/<int:player_id>/ready', methods=['PUT'])

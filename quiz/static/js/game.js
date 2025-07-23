@@ -31,7 +31,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             socket.emit('join', {
                 room: sessionCode,
-                username: name
+                username: name,
+                player_id: playerId
             });
 
             await loadPlayers();
@@ -55,9 +56,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
             players.forEach(p => {
                 const li = document.createElement('li');
-                li.textContent = `${p.name} - ${p.is_ready ? 'Ready' : 'Not Ready'}`;
+                const statusIcon = p.is_connected ? '🟢' : '🔴';
+                const readyText = p.is_ready ? 'Ready' : 'Not Ready';
+                li.textContent = `${statusIcon} ${p.name} - ${readyText}`;
                 ul.appendChild(li);
             });
+
         } catch (err) {
             console.error('Error loading players:', err)
         }
@@ -311,7 +315,21 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         document.body.appendChild(table);
-    })
+    });
+
+    socket.on('player_left', async (data) => {
+        console.log('Player left:', data);
+        await loadPlayers();
+    });
+
+    window.addEventListener('beforeunload', () => {
+        if (playerId && sessionCode) {
+            socket.emit('leave', {
+                room: sessionCode,
+                player_id: playerId
+            });
+        }
+    });
 
     // Global functions to bind to HTML buttons
     window.joinSession = joinSession;

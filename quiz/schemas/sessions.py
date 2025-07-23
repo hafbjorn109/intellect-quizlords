@@ -8,6 +8,7 @@ class PlayerSchema(Schema):
     is_ready = fields.Bool(load_default=False)
     session_id = fields.Int(dump_only=True)
     score = fields.Int(dump_only=True)
+    is_connected = fields.Bool(load_default=True)
 
 
 class ScoreboardPlayerSchema(Schema):

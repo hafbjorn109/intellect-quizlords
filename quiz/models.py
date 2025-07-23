@@ -99,6 +99,7 @@ class Player(db.Model):
         foreign_keys=[session_id]
     )
     score = db.Column(db.Integer, default=0)
+    is_connected = db.Column(db.Boolean, default=True)
 
 
 class Round(db.Model):
