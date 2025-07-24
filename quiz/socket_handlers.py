@@ -9,6 +9,14 @@ connected_players = {}
 
 @socketio.on('join')
 def handle_join(data):
+    """
+    Handle a player joining a game session.
+
+    - Joins the player to the specified room.
+    - Marks the player as connected in the database.
+    - Adds the player's socket ID to the connected_players dictionary.
+    - Broadcasts a 'player_joined' event to other players in the room.
+    """
     room = data.get('room')
     username = data.get('username')
     player_id = data.get('player_id')
@@ -31,6 +39,14 @@ def handle_join(data):
 
 @socketio.on('disconnect')
 def handle_disconnect():
+    """
+    Handle unexpected disconnection of a player (e.g., closing tab or losing connection).
+
+    - Removes the socket ID from the connected_players dictionary.
+    - Marks the player as disconnected in the database.
+    - If no players remain connected to the session, marks the session as inactive.
+    - Broadcasts a 'player_left' event to remaining players in the room.
+    """
     sid = request.sid
     player_id = connected_players.pop(sid, None)
 
@@ -61,6 +77,14 @@ def handle_disconnect():
 
 @socketio.on('leave')
 def handle_leave(data):
+    """
+    Handle a player intentionally leaving a game session.
+
+    - Removes the socket ID from the connected_players dictionary.
+    - Marks the player as disconnected in the database.
+    - If no players remain connected to the session, marks the session as inactive.
+    - Broadcasts a 'player_left' event to remaining players in the room.
+    """
     sid = request.sid
     player_id = data.get("player_id")
 
@@ -95,6 +119,13 @@ def handle_leave(data):
 
 @socketio.on('player_ready_changed')
 def handle_ready_changed(data):
+    """
+    Handle changes to a player's readiness state.
+
+    - Broadcasts the updated readiness status to the room.
+    - If all connected players are ready, picks a random chooser and starts the game.
+    - Emits a 'game_started' event with the chooser info and initial round number.
+    """
     room = data.get('room')
     player_id = data.get('player_id')
     is_ready = data.get('is_ready')

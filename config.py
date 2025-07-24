@@ -1,6 +1,5 @@
 from decouple import config
 from urllib.parse import quote
-import os
 from datetime import timedelta
 
 class Config:

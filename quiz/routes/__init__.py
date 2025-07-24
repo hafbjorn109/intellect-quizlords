@@ -16,6 +16,7 @@ def register_routes(app):
     - /answers
     - /sessions
     - /sessions/<string:code>/rounds
+    - / (views for frontend routing)
     """
     app.register_blueprint(categories_bp)
     app.register_blueprint(questions_bp)

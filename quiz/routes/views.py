@@ -6,10 +6,12 @@ bp = Blueprint('views', __name__)
 
 @bp.route('/')
 def index():
+    """Renders the index page. Contains create session or join existing one. """
     return render_template('index.html')
 
 @bp.route('/game/<string:code>')
 def game_view(code):
+    """Renders main game view. Requires code of existing session."""
     session = GameSession.query.filter_by(code=code).first()
     if session is None:
         abort(404)
@@ -17,4 +19,8 @@ def game_view(code):
 
 @bp.route('/admin')
 def admin_view():
+    """
+    Renders Admin Panel. Contains adding/editing categories and questions,
+    allows to flush inactive sessions.
+    """
     return render_template('admin.html')
