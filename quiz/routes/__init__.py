@@ -4,6 +4,7 @@ from .answers import bp as answers_bp
 from .sessions import bp as sessions_bp
 from .rounds import bp as rounds_bp
 from .views import bp as views_bp
+from .admin import bp as admin_bp
 
 
 def register_routes(app):
@@ -17,6 +18,7 @@ def register_routes(app):
     - /sessions
     - /sessions/<string:code>/rounds
     - / (views for frontend routing)
+    - /admin
     """
     app.register_blueprint(categories_bp)
     app.register_blueprint(questions_bp)
@@ -24,3 +26,4 @@ def register_routes(app):
     app.register_blueprint(sessions_bp)
     app.register_blueprint(rounds_bp)
     app.register_blueprint(views_bp)
+    app.register_blueprint(admin_bp)

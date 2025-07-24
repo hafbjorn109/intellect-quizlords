@@ -1,6 +1,24 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
 
+    const token = localStorage.getItem('adminToken');
 
+    if (!token) {
+        window.location.href = '/admin-login';
+    } else {
+        try {
+            const res = await fetch('/admin/auth/verify', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!res.ok) {
+                window.location.href = '/admin-login';
+            }
+        } catch (err) {
+            console.error('Token verification error:', err);
+        }
+    }
 
     // Handles switching between admin views and rendering the appropriate form/view.
     async function showView(viewName) {
@@ -49,7 +67,10 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const res = await fetch('/categories/', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('adminToken')
+                    },
                     body: JSON.stringify({ name })
                 });
                 const data = await res.json();
@@ -140,7 +161,10 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const questionRes = await fetch('/questions/', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('adminToken')
+                    },
                     body: JSON.stringify({ text, category_id: categoryId})
                 });
 
@@ -155,7 +179,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let answer of validAnswers) {
                     await fetch('/answers', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + localStorage.getItem('adminToken')
+                            },
                         body: JSON.stringify({
                             text: answer.text,
                             is_correct: answer.is_correct,
@@ -254,7 +281,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         const response = await fetch(`/categories/${cat.id}`, {
                             method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + localStorage.getItem('adminToken')
+                            },
                             body: JSON.stringify({ name: newName })
                         });
 
@@ -270,7 +300,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!confirm(`Are you sure you want to delete category ${cat.name}?`)) return;
 
                     const response = await fetch(`/categories/${cat.id}`, {
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + localStorage.getItem('adminToken')
+                        },
                     });
 
                     if (response.ok) {
@@ -444,18 +478,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             await fetch(`/questions/${q.id}`, {
                                 method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': 'Bearer ' + localStorage.getItem('adminToken')
+                                },
                                 body: JSON.stringify({ text: newText, category_id: selectedId })
                             });
 
 
                             for (let a of answerInputs) {
                                 if (a.deleted) {
-                                    await fetch(`/answers/${a.id}`, { method: 'DELETE' });
+                                    await fetch(`/answers/${a.id}`, {
+                                        method: 'DELETE' ,
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': 'Bearer ' + localStorage.getItem('adminToken')
+                                        }
+                                    });
                                 } else {
                                     await fetch(`/answers/${a.id}`, {
                                         method: 'PUT',
-                                        headers: { 'Content-Type': 'application/json' },
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': 'Bearer ' + localStorage.getItem('adminToken')
+                                        },
                                         body: JSON.stringify({
                                             text: a.input.value.trim(),
                                             is_correct: a.checkbox.checked,
@@ -469,7 +515,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             for (let a of newAnswers) {
                                 await fetch(`/answers/`, {
                                     method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': 'Bearer ' + localStorage.getItem('adminToken')
+                                    },
                                     body: JSON.stringify({
                                         text: a.text,
                                         is_correct: a.is_correct,
@@ -486,7 +535,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         if(!confirm('Are you sure you want to delete this question?')) return;
 
                         const res = await fetch(`/questions/${q.id}`, {
-                            method: 'DELETE'
+                            method: 'DELETE',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + localStorage.getItem('adminToken')
+                            }
                         });
 
                         if (res.ok) {
@@ -518,7 +571,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const res = await fetch('/sessions/cleanup-sessions', {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('adminToken')
+                }
             });
 
             const data = await res.json();
@@ -536,6 +593,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Logs out admin by removing token and redirecting to login page
+    function logoutAdmin() {
+        localStorage.removeItem('adminToken');
+        window.location.href = '/admin-login';
+    }
+
+    window.logoutAdmin = logoutAdmin;
     window.showView = showView;
     window.flushSessions = flushSessions;
 })

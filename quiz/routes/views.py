@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, abort
-
+from quiz.decorators import admin_required
 from quiz.models import GameSession
 
 bp = Blueprint('views', __name__)
@@ -24,3 +24,8 @@ def admin_view():
     allows to flush inactive sessions.
     """
     return render_template('admin.html')
+
+@bp.route('/admin-login')
+def admin_login_view():
+    """Renders login page for admin panel."""
+    return render_template('admin_login.html')
