@@ -140,3 +140,22 @@ def end_session(code):
     db.session.commit()
 
     return jsonify({'message': 'Session ended'}), 200
+
+@bp.route('/cleanup-sessions', methods=['DELETE'])
+def cleanup_inactive_sessions():
+    """
+    Delete all inactive game sessions from DB.
+    """
+
+    inactive_sessions = GameSession.query.filter_by(is_active=False).all()
+    deleted_count = 0
+
+    for session in inactive_sessions:
+        print(f"Deleting session {session.id}")
+        db.session.delete(session)
+        deleted_count += 1
+
+    db.session.commit()
+    print("Committed")
+
+    return jsonify({'message': f'{deleted_count} inactive sessions deleted'}), 200

@@ -46,13 +46,13 @@ class AnswerGiven(db.Model):
     __tablename__ = 'answers_given'
 
     id = db.Column(db.Integer, primary_key=True)
-    player_id = db.Column(db.Integer, db.ForeignKey('players.id'), nullable=False)
+    player_id = db.Column(db.Integer, db.ForeignKey('players.id', ondelete='CASCADE'), nullable=False)
     round_id = db.Column(db.Integer, db.ForeignKey('rounds.id'), nullable=False)
     answer_id = db.Column(db.Integer, db.ForeignKey('answers.id'), nullable=False)
 
     is_correct = db.Column(db.Boolean, nullable=False)
 
-    player = db.relationship('Player')
+    player = db.relationship('Player', back_populates='answers_given')
     round = db.relationship('Round')
     answer = db.relationship('Answer')
 
@@ -72,10 +72,11 @@ class GameSession(db.Model):
         'Player',
         back_populates='session',
         cascade="all, delete",
-        foreign_keys='Player.session_id'
+        foreign_keys='Player.session_id',
+        passive_deletes=True
     )
     chooser = db.relationship('Player', foreign_keys=[chooser_id])
-    rounds = db.relationship('Round', back_populates='session', cascade="all, delete")
+    rounds = db.relationship('Round', back_populates='session', cascade="all, delete-orphan", passive_deletes=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -96,21 +97,28 @@ class Player(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(25), nullable=False)
     is_ready = db.Column(db.Boolean, default=False, nullable=False)
-    session_id = db.Column(db.Integer, db.ForeignKey('game_sessions.id'), nullable=False)
+    session_id = db.Column(db.Integer, db.ForeignKey('game_sessions.id', ondelete='CASCADE'), nullable=False)
     session = db.relationship(
         'GameSession',
         back_populates='players',
-        foreign_keys=[session_id]
+        foreign_keys=[session_id],
+        passive_deletes=True
     )
     score = db.Column(db.Integer, default=0)
     is_connected = db.Column(db.Boolean, default=True)
+    answers_given = db.relationship(
+        'AnswerGiven',
+        back_populates='player',
+        cascade='all, delete-orphan',
+        passive_deletes=True
+    )
 
 
 class Round(db.Model):
     __tablename__ = 'rounds'
 
     id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.Integer, db.ForeignKey('game_sessions.id'), nullable=False)
+    session_id = db.Column(db.Integer, db.ForeignKey('game_sessions.id', ondelete='CASCADE'), nullable=False)
     question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
     current = db.Column(db.Boolean, default=False, nullable=False)
     chooser_id = db.Column(

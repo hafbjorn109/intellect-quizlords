@@ -49,7 +49,17 @@ def handle_disconnect():
                 }, to=session.code)
 
             player.is_connected = False
+            print(f'is connected? {player.is_connected}')
             db.session.commit()
+
+            remaining_connected = Player.query.filter_by(
+                session_id=player.session_id,
+                is_connected=True
+            ).count()
+
+            if remaining_connected == 0:
+                session.is_active = False
+                db.session.commit()
 
 
 @socketio.on('leave')
@@ -62,11 +72,14 @@ def handle_leave(data):
 
     if not player_id:
         return
-
+    print(f'[leave] connected players before pop: {connected_players}') # ✅ DEBUG
     connected_players.pop(sid, None)
     print(f"[leave] connected_players after pop: {connected_players}")  # ✅ DEBUG
+    print(f"[leave] playerid after pop: {player_id}")  # ✅ DEBUG
+
 
     player = Player.query.get(player_id)
+    print(f"[leave] player got by player_id after pop: {player}")
     if player:
         session = GameSession.query.get(player.session_id)
         if session:
@@ -77,7 +90,20 @@ def handle_leave(data):
             }, to=session.code)
 
         player.is_connected = False
+        print(f'is connected? {player.is_connected}')
         db.session.commit()
+
+        remaining_connected = Player.query.filter_by(
+            session_id=player.session_id,
+            is_connected=True
+        ).count()
+
+        print(f'remaining connected: {remaining_connected}')
+
+
+        if remaining_connected == 0:
+            session.is_active = False
+            db.session.commit()
 
 
 @socketio.on('player_ready_changed')

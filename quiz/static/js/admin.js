@@ -497,5 +497,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function flushSessions() {
+        const msg = document.createElement('cleanup-msg');
+        msg.textContent = '';
+
+        if(!confirm('Are you sure you want to wipe out all of inactive sessions?')) return;
+
+        try {
+            const res = await fetch('/sessions/cleanup-sessions', {
+                method: 'DELETE'
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                msg.style.color = 'green';
+                msg.textContent = data.message || 'Sessions deleted.';
+            } else {
+                msg.style.color = 'red';
+                msg.textContent = data.error || 'Sessions cannot be deleted.'
+            }
+
+        } catch (err) {
+            console.error('Error: ', err)
+        }
+    }
+
     window.showView = showView;
+    window.flushSessions = flushSessions;
 })
