@@ -31,6 +31,7 @@ class AnswerSchema(Schema):
 
 
 class AnswerUpdateSchema(Schema):
+    # Marshmallow schema for serializing and validating AnswerUpdate objects.
     text = fields.Str(validate=validate.Length(min=1, max=255))
     is_correct = fields.Bool()
     question_id = fields.Int()

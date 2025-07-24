@@ -3,6 +3,7 @@ from .questions import QuestionSchema
 
 
 class PlayerSchema(Schema):
+    # Marshmallow schema for serializing and validating Player objects. Checks if name is not empty.
     id = fields.Int(dump_only=True)
     name = fields.Str(required=True)
     is_ready = fields.Bool(load_default=False)
@@ -17,12 +18,14 @@ class PlayerSchema(Schema):
 
 
 class ScoreboardPlayerSchema(Schema):
+    # Marshmallow schema for serializing and validating Scoreboard.
     id = fields.Int(dump_only=True)
     name = fields.Str(dump_only=True)
     score = fields.Int(dump_only=True)
 
 
 class GameSessionSchema(Schema):
+    # Marshmallow schema for serializing and validating Game Session objects.
     id = fields.Int(dump_only=True)
     code = fields.Str(dump_only=True)
     is_active = fields.Bool(required=True)
@@ -32,6 +35,7 @@ class GameSessionSchema(Schema):
 
 
 class RoundSchema(Schema):
+    # Marshmallow schema for serializing and validating Round objects.
     id = fields.Int(dump_only=True)
     session_id = fields.Int(required=True)
     question_id = fields.Int(dump_only=True)
@@ -40,5 +44,6 @@ class RoundSchema(Schema):
 
 
 class ChooserSchema(Schema):
+    # Marshmallow schema for serializing and validating Chooser.
     id = fields.Int(dump_only=True)
     name = fields.Str(dump_only=True)

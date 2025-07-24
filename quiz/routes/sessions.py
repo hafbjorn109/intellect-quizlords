@@ -1,6 +1,5 @@
 from flask import Blueprint, jsonify, request, current_app
 from marshmallow import ValidationError
-
 from quiz.models import db, GameSession, Player
 from quiz.schemas.sessions import GameSessionSchema, PlayerSchema, ScoreboardPlayerSchema
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
@@ -151,11 +150,9 @@ def cleanup_inactive_sessions():
     deleted_count = 0
 
     for session in inactive_sessions:
-        print(f"Deleting session {session.id}")
         db.session.delete(session)
         deleted_count += 1
 
     db.session.commit()
-    print("Committed")
 
     return jsonify({'message': f'{deleted_count} inactive sessions deleted'}), 200
