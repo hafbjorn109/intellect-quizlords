@@ -15,7 +15,7 @@ chooser_schema = ChooserSchema()
 question_schema = QuestionSchema()
 players_schema = PlayerSchema(many=True)
 
-MAX_ROUNDS = 1
+MAX_ROUNDS = 10
 
 @bp.route('/setup', methods=['POST'])
 def setup_round(code):
