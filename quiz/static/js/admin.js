@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+
+
+    // Handles switching between admin views and rendering the appropriate form/view.
     async function showView(viewName) {
         const container = document.getElementById('admin-content');
         container.innerHTML = '';
@@ -15,13 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 await renderEditCategoriesView(container);
                 break;
             case 'edit-questions':
-                renderEditQuestionsView(container);
+                await renderEditQuestionsView(container);
                 break;
             default:
                 container.innerHTML = '<p>Unknown view selected</p>'
         }
     }
 
+    // Renders the form for adding a new category.
     async function renderAddCategoryForm(container) {
         const form = document.createElement('form');
         form.innerHTML = `
@@ -67,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.appendChild(form);
     }
 
+    // Renders the form for adding a new question and associated answers.
     async function renderAddQuestionForm(container) {
         const form = document.createElement('form');
         form.innerHTML = `
@@ -173,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Loads available categories into a given <select> element.
     async function loadCategoriesToSelect(selectElement) {
         const res = await fetch('/categories/');
         const data = await res.json();
@@ -186,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Adds a new answer input row (text field + correct checkbox) to the given container.
     function addAnswerInput(container) {
         const div = document.createElement('div');
         div.classList.add('answer-entry');
@@ -199,6 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.appendChild(div);
     }
 
+    // Renders the view for editing existing categories (rename and delete).
     async function renderEditCategoriesView(container) {
         const heading = document.createElement('h2');
         container.appendChild(heading);
@@ -284,6 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Renders the view for editing existing questions and their answers.
     async function renderEditQuestionsView(container) {
         const heading = document.createElement('h2');
         heading.textContent = 'Edit questions';
@@ -497,6 +506,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    /**
+     * Sends request to backend to delete all inactive sessions from the database.
+     * Displays a confirmation dialog before proceeding.
+     */
     async function flushSessions() {
         const msg = document.createElement('cleanup-msg');
         msg.textContent = '';

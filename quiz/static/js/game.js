@@ -6,6 +6,11 @@ document.addEventListener("DOMContentLoaded", () => {
     let isReady = false;
     let currentRoundId = null;
 
+    /**
+     * Joins the current player to the game session using their name.
+     * Sends POST request to backend and emits `join` via socket.
+     * Updates view to show the lobby.
+     */
     async function joinSession() {
         const name = document.getElementById('player-name').value;
 
@@ -41,6 +46,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    /**
+     * Fetches the list of players in the session and updates the player list UI.
+     */
     async function loadPlayers() {
         try {
             const res = await fetch(`/sessions/${sessionCode}/players`);
@@ -67,6 +75,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    /**
+     * Toggles the ready status of the player, updates backend, UI, and emits socket event.
+     */
     async function toggleReady() {
         isReady = !isReady;
 
@@ -100,6 +111,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    /**
+     * Sends a category choice to the backend to start the round.
+     * Hides the category picker after selection.
+     */
     async function setupRound() {
         const categoryId = document.getElementById('category-select').value;
 
@@ -127,6 +142,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    /**
+     * Fetches all available categories from backend and populates the <select> dropdown.
+     */
     async function loadCategories() {
         try {
             const res = await fetch('/categories');
@@ -152,28 +170,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    async function showScoreboard() {
-        try {
-            const res = await fetch(`/sessions/${sessionCode}/scoreboard`);
-            const data = await res.json();
-
-            const section = document.createElement('div');
-            section.innerHTML = '<h2> Final Scoreboard</h2><ul></ul>'
-            const ul = section.querySelector('ul');
-
-            data.forEach(p => {
-                const li = document.createElement('li');
-                li.textContent = `${p.name} - ${p.score} pts`;
-                ul.appendChild(li);
-            });
-            document.body.innerHTML = '';
-            document.body.appendChild(section);
-
-        } catch (err) {
-            console.error('Could not fetch scoreboeard:', err)
-        }
-    }
-
+    /**
+     * Submits selected answer to backend, shows result and disables answer buttons.
+     */
     async function submitAnswer(answerId) {
         if (!currentRoundId || !playerId) {
             alert('Missing round or player info');
@@ -216,6 +215,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    /**
+     * Updates the scoreboard section with current scores.
+     */
     function updateScoreboard(players) {
         const list = document.getElementById('scoreboard-list');
         list.innerHTML = '';
@@ -254,16 +256,22 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("question-section").style.display = "block";
     });
 
+    // Handles when a new player joins the session.
     socket.on('player_joined', async (data) => {
         console.log('Player joined:', data);
         await loadPlayers();
     });
 
+    // Updates the readiness status of a player in the lobby.
     socket.on('player_ready_updated', async (data) => {
         console.log('Ready status updated:', data);
         await loadPlayers();
     });
 
+    /**
+     * Handles the event when the game officially starts.
+     * Displays chooser info and shows category selection if applicable.
+     */
     socket.on('game_started', async (data) => {
         console.log('Game started!');
 
@@ -279,6 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // Handles transition to the next chooser and round.
     socket.on('chooser_turn', async (data) => {
         document.getElementById('question-section').style.display = 'none';
         document.getElementById('category-pick-section').style.display = 'none';
@@ -293,6 +302,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // Displays the final scoreboard and ends the game view.
     socket.on('game_over', data => {
         const scoreboard = data.scoreboard;
 
@@ -321,11 +331,18 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.appendChild(table);
     });
 
+    // Updates player list when someone leaves the session.
     socket.on('player_left', async (data) => {
         console.log('Player left:', data);
         await loadPlayers();
     });
 
+    /**
+     * Emits a 'leave' event to the server before the player closes or reloads the tab.
+     *
+     * This ensures the server is explicitly notified that the player has left,
+     * allowing it to update connection status and remove the player from the room.
+     */
     window.addEventListener('beforeunload', () => {
         if (playerId && sessionCode) {
             socket.emit('leave', {
