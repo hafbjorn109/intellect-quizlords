@@ -11,6 +11,7 @@ Real-time multiplayer quiz game built with Flask, Socket.IO, and PostgreSQL. Pla
 - 📊 Scoreboard and automatic game-over logic
 - 🧪 REST API for categories, questions, answers, sessions
 - ⚙️ Admin panel for managing questions and categories
+- 🔐 Protected admin panel with JWT login and access control
 
 ## Tech Stack
 
@@ -62,6 +63,12 @@ flask db init
 flask db migrate
 flask db upgrade
 ```
+### Create Admin Account
+
+Use the CLI script to create the first admin using credentials from `.env`:
+```bash
+python scripts/create_admin.py
+```
 
 Run the app:
 
@@ -78,6 +85,41 @@ python app.py
 - Questions are served randomly from the selected category.
 - Players earn 1 point per correct answer.
 - After all rounds, scoreboard is displayed.
+
+## Admin Authentication
+
+### Login
+
+`POST /admin/auth/login`
+
+Request:
+
+```json
+{
+    "username": "your_admin_username",
+    "password": "your_admin_password"
+}
+```
+Response:
+```json
+{
+    "access_token": "JWT_ACCESS_TOKEN"
+}
+```
+
+Token Verification:
+
+Headers:
+```
+Authorization: Bearer <JWT_ACCESS_TOKEN>
+```
+
+Response:
+```json
+{
+    "message": "Token is valid"
+}
+```
 
 ## WebSocket Events
 
@@ -211,7 +253,7 @@ After 10 rounds:
 
 ## Admin Panel
 
-Visit `/admin` to:
+Visit `/admin-login` to authenticate as admin. Upon successful login, you'll be redirected to `/admin` where you can:
 
 - Add/edit/delete categories
 - Add/edit/delete questions + answers
