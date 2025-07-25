@@ -17,6 +17,7 @@ players_schema = PlayerSchema(many=True)
 
 MAX_ROUNDS = 10
 
+
 @bp.route('/setup', methods=['POST'])
 def setup_round(code):
     """
@@ -154,7 +155,8 @@ def given_answer(code):
 
     answer = Answer.query.get_or_404(data['answer_id'])
     if answer.question.id != round.question_id:
-        return jsonify({'error': 'Answer does not belong to the current round question'}), 400
+        return jsonify(
+            {'error': 'Answer does not belong to the current round question'}), 400
 
     is_correct = answer.is_correct
 
@@ -183,15 +185,19 @@ def given_answer(code):
             db.session.commit()
 
             try:
-                players = Player.query.filter_by(session_id=session.id).order_by(Player.score.desc()).all()
+                players = Player.query.filter_by(
+                    session_id=session.id).order_by(Player.score.desc()).all()
+
                 socketio.emit('game_over', {
                     'scoreboard': [
                         {'name': p.name, 'score': p.score}
                         for p in players
                     ]
                 }, to=code)
+
             except Exception as e:
-                current_app.logger.warning(f'[Setup Round] Emit game_over failed for session {code}: {e}')
+                current_app.logger.warning(
+                    f'[Setup Round] Emit game_over failed for session {code}: {e}')
 
             return jsonify({'message': 'Game over', 'game_over': True}), 200
 
@@ -207,11 +213,11 @@ def given_answer(code):
         session.chooser_id = next_player.id
         db.session.commit()
 
-        scoreboard_players = Player.query.filter_by(session_id=session.id).order_by(Player.score.desc()).all()
+        scoreboard_players = Player.query.filter_by(
+            session_id=session.id).order_by(Player.score.desc()).all()
         scoreboard_data = players_schema.dump(scoreboard_players)
 
         round_number = Round.query.filter_by(session_id=session.id).count() + 1
-
 
         socketio.emit('chooser_turn', {
             'chooser': {
@@ -223,4 +229,3 @@ def given_answer(code):
         }, to=code)
 
     return jsonify(answer_given_schema.dump(given)), 201
-

@@ -1,6 +1,7 @@
 import string, random
 from db import db
 
+
 class Category(db.Model):
     __tablename__ = 'categories'
 
@@ -21,9 +22,18 @@ class Question(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(255), nullable=False)
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id', ondelete='CASCADE'), nullable=False)
+    category_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            'categories.id',
+            ondelete='CASCADE'),
+        nullable=False)
     category = db.relationship(Category, back_populates="questions")
-    answers = db.relationship('Answer', back_populates='question', cascade="all, delete-orphan", passive_deletes=True)
+    answers = db.relationship(
+        'Answer',
+        back_populates='question',
+        cascade="all, delete-orphan",
+        passive_deletes=True)
 
     def __repr__(self):
         return f'<Question "{self.text}">'
@@ -35,18 +45,28 @@ class Answer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(255), nullable=False)
     is_correct = db.Column(db.Boolean, default=False, nullable=False)
-    question_id = db.Column(db.Integer, db.ForeignKey('questions.id', ondelete='CASCADE'), nullable=False)
+    question_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            'questions.id',
+            ondelete='CASCADE'),
+        nullable=False)
     question = db.relationship(Question, back_populates="answers")
 
     def __repr__(self):
-        return f'<Answer {self.text } (correct={self.is_correct})>'
+        return f'<Answer {self.text} (correct={self.is_correct})>'
 
 
 class AnswerGiven(db.Model):
     __tablename__ = 'answers_given'
 
     id = db.Column(db.Integer, primary_key=True)
-    player_id = db.Column(db.Integer, db.ForeignKey('players.id', ondelete='CASCADE'), nullable=False)
+    player_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            'players.id',
+            ondelete='CASCADE'),
+        nullable=False)
     round_id = db.Column(db.Integer, db.ForeignKey('rounds.id'), nullable=False)
     answer_id = db.Column(db.Integer, db.ForeignKey('answers.id'), nullable=False)
 
@@ -65,7 +85,11 @@ class GameSession(db.Model):
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     chooser_id = db.Column(
         db.Integer,
-        db.ForeignKey('players.id', use_alter=True, name='fk_chooser_id', ondelete='SET NULL'),
+        db.ForeignKey(
+            'players.id',
+            use_alter=True,
+            name='fk_chooser_id',
+            ondelete='SET NULL'),
         nullable=True
     )
     players = db.relationship(
@@ -76,7 +100,11 @@ class GameSession(db.Model):
         passive_deletes=True
     )
     chooser = db.relationship('Player', foreign_keys=[chooser_id])
-    rounds = db.relationship('Round', back_populates='session', cascade="all, delete-orphan", passive_deletes=True)
+    rounds = db.relationship(
+        'Round',
+        back_populates='session',
+        cascade="all, delete-orphan",
+        passive_deletes=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -97,7 +125,11 @@ class Player(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(25), nullable=False)
     is_ready = db.Column(db.Boolean, default=False, nullable=False)
-    session_id = db.Column(db.Integer, db.ForeignKey('game_sessions.id', ondelete='CASCADE'), nullable=False)
+    session_id = db.Column(db.Integer, db.ForeignKey(
+        'game_sessions.id',
+        ondelete='CASCADE'),
+        nullable=False
+    )
     session = db.relationship(
         'GameSession',
         back_populates='players',
@@ -118,12 +150,22 @@ class Round(db.Model):
     __tablename__ = 'rounds'
 
     id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.Integer, db.ForeignKey('game_sessions.id', ondelete='CASCADE'), nullable=False)
-    question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
+    session_id = db.Column(
+        db.Integer,
+        db.ForeignKey('game_sessions.id', ondelete='CASCADE'),
+        nullable=False)
+    question_id = db.Column(
+        db.Integer,
+        db.ForeignKey('questions.id'),
+        nullable=False)
     current = db.Column(db.Boolean, default=False, nullable=False)
     chooser_id = db.Column(
         db.Integer,
-        db.ForeignKey('players.id', use_alter=True, name='fk_round_chooser_id', ondelete='SET NULL'),
+        db.ForeignKey(
+            'players.id',
+            use_alter=True,
+            name='fk_round_chooser_id',
+            ondelete='SET NULL'),
         nullable=True
     )
 
@@ -134,5 +176,5 @@ class Round(db.Model):
 class Admin(db.Model):
     __tablename__ = 'admins'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(25), unique= True, nullable=False)
+    username = db.Column(db.String(25), unique=True, nullable=False)
     password_hash = db.Column(db.Text, nullable=False)

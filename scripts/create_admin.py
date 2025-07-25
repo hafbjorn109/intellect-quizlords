@@ -1,10 +1,11 @@
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from quiz import create_app
 from quiz.models import db, Admin
 from werkzeug.security import generate_password_hash
 from decouple import config
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 app = create_app()
 
@@ -14,7 +15,7 @@ with app.app_context():
     if not Admin.query.filter_by(username=username).first():
         admin = Admin(
             username=username,
-            password_hash = generate_password_hash(password),
+            password_hash=generate_password_hash(password),
         )
 
         db.session.add(admin)

@@ -1,4 +1,4 @@
-from flask_socketio import join_room, emit, leave_room, disconnect
+from flask_socketio import join_room, emit, leave_room
 from flask import request
 from quiz import socketio
 from .models import GameSession, Player
@@ -6,6 +6,7 @@ import random
 from quiz.models import db
 
 connected_players = {}
+
 
 @socketio.on('join')
 def handle_join(data):

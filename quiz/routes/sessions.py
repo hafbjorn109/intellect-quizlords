@@ -13,6 +13,7 @@ player_schema = PlayerSchema()
 players_schema = PlayerSchema(many=True)
 scoreboard_schema = ScoreboardPlayerSchema(many=True)
 
+
 @bp.route('/', methods=['POST'])
 def create_session():
     """Create a new session (returns session code)"""
@@ -70,7 +71,6 @@ def join_session(code):
         }, to=code)
     except Exception as e:
         current_app.logger.warning(f'Emit failed for session {code}: {e}')
-
 
     return jsonify({
         'player': player_schema.dump(player),
@@ -139,6 +139,7 @@ def end_session(code):
     db.session.commit()
 
     return jsonify({'message': 'Session ended'}), 200
+
 
 @bp.route('/cleanup-sessions', methods=['DELETE'])
 def cleanup_inactive_sessions():

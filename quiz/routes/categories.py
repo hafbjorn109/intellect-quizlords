@@ -7,6 +7,7 @@ bp = Blueprint('categories', __name__, url_prefix='/categories')
 category_schema = CategorySchema()
 categories_schema = CategorySchema(many=True)
 
+
 @bp.route('/', methods=['POST'])
 def create_category():
     """

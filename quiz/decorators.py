@@ -2,6 +2,7 @@ from flask_jwt_extended import verify_jwt_in_request, get_jwt
 from functools import wraps
 from flask import jsonify
 
+
 def admin_required(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):

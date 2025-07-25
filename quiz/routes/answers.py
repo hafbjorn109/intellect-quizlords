@@ -8,6 +8,7 @@ answer_schema = AnswerSchema()
 answer_update_schema = AnswerUpdateSchema()
 answers_schema = AnswerSchema(many=True)
 
+
 @bp.route('/', methods=['POST'])
 def create_answer():
     """
@@ -24,7 +25,10 @@ def create_answer():
     if errors:
         return jsonify({'error': errors}), 400
 
-    answer = Answer(text=data['text'], question_id=data['question_id'], is_correct=data['is_correct'])
+    answer = Answer(
+        text=data['text'],
+        question_id=data['question_id'],
+        is_correct=data['is_correct'])
     db.session.add(answer)
     db.session.commit()
 

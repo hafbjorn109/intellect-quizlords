@@ -1,9 +1,8 @@
 from flask import Flask
 from flask_jwt_extended import JWTManager
 from config import Config
-from.socketio_instance import socketio
+from .socketio_instance import socketio
 from db import db, migrate
-from . import models
 from .routes import register_routes
 
 
@@ -27,7 +26,7 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     socketio.init_app(app)
 
-    jwt = JWTManager(app)
+    JWTManager(app)
 
     with app.app_context():
         from quiz import models

@@ -7,6 +7,7 @@ bp = Blueprint('questions', __name__, url_prefix='/questions')
 question_schema = QuestionSchema()
 questions_schema = QuestionSchema(many=True)
 
+
 @bp.route('/', methods=['POST'])
 def create_question():
     """

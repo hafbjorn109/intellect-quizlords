@@ -2,6 +2,7 @@ from decouple import config
 from urllib.parse import quote
 from datetime import timedelta
 
+
 class Config:
     """
     Configuration class for the Flask application.

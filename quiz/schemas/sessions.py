@@ -3,7 +3,8 @@ from .questions import QuestionSchema
 
 
 class PlayerSchema(Schema):
-    # Marshmallow schema for serializing and validating Player objects. Checks if name is not empty.
+    # Marshmallow schema for serializing and validating Player objects.
+    # Checks if name is not empty.
     id = fields.Int(dump_only=True)
     name = fields.Str(required=True)
     is_ready = fields.Bool(load_default=False)
